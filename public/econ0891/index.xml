@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>A Hugo website</title>
-    <link>/</link>
-    <description>Recent content on A Hugo website</description>
+    <title>Econ0891s on A Hugo website</title>
+    <link>/econ0891/</link>
+    <description>Recent content in Econ0891s on A Hugo website</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 31 Mar 2021 00:00:00 +0000</lastBuildDate>
     
-	<atom:link href="/index.xml" rel="self" type="application/rss+xml" />
+	<atom:link href="/econ0891/index.xml" rel="self" type="application/rss+xml" />
     
     
     <item>
@@ -18,15 +18,6 @@
       
       <guid>/econ0891/1-linearregressionwithsingleregressor/</guid>
       <description></description>
-    </item>
-    
-    <item>
-      <title>Announcement</title>
-      <link>/announcement/</link>
-      <pubDate>Thu, 05 May 2016 21:48:51 -0700</pubDate>
-      
-      <guid>/announcement/</guid>
-      <description>There are no announcements as of now.</description>
     </item>
     
   </channel>
