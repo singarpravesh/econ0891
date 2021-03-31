@@ -5,11 +5,18 @@ date: "2021-03-30"
 output: html_document
 ---
 
-## Introduction
+# Contents
+[2.1 Introduction](#two-one)<br>
+[2.2 Omitted variable bias](#two-two)<br>
+[2.3 The Multiple Regression Model](#two-three)<br>
+[2.4 Multicollinearity](#two-four)<br>
+[2.5 Exercise](#two-five)
+
+# 2.1 Introduction {#two-one}
 - Reference book (Theory): **Introduction to Econometrics** by *Stock and Watson*, 3e.
 - The data are taken from the [Companion Website](http://wps.pearsoned.co.uk/ema_ge_stock_ieupdate_3/251/64413/16489872.cw/index.html){target="_blank"} for Introduction to Econometrics book. 
 
-# Omitted variable bias
+# 2.2 Omitted variable bias {#two-two}
 
 ## {.smaller}
 
@@ -282,7 +289,7 @@ summary(lm_dummy)[[4]][,3, drop = FALSE]
   <li>  Construct a *matrix* or a *data frame* to summarise your results in a tabular form as close as Table 6.1
 </li>
 
-# The Multiple Regression Model
+# 2.3 The Multiple Regression Model {#two-three}
 
 ## {.smaller}
 
@@ -330,7 +337,7 @@ lm_multi
 - These two estimates can be reconciled by concluding that there is omitted
 variable bias in the estimate in the single-regressor model `lm_model1`.
 
-# Multicollinearity
+# 2.4 Multicollinearity {#two-four}
 
 ---
 
@@ -497,7 +504,7 @@ summary(lm_region2 <- lm(testscr ~ read_scr + computer +
 ```
 
 
-# Exercise
+# 2.5 Exercise {#two-five}
 
 ## {.smaller}
 

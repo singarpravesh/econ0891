@@ -67,15 +67,24 @@
       
 
 
-<div id="introduction" class="section level2">
-<h2>Introduction</h2>
+<div id="contents" class="section level1">
+<h1>Contents</h1>
+<p><a href="#one-one">1.1 Introduction</a><br>
+<a href="#one-two">1.2 Linear Regression</a><br>
+<a href="#one-three">1.3 The OLS estimator</a><br>
+<a href="#one-four">1.4 Measures of fit</a><br>
+<a href="#one-five">1.5 The sensitivity of OLS to large outliers</a><br>
+<a href="#one-six">1.6 Exercise</a></p>
+</div>
+<div id="one-one" class="section level1">
+<h1>1.1 Introduction</h1>
 <ul>
 <li>Reference book (Theory): <strong>Introduction to Econometrics</strong> by <em>Stock and Watson</em>, 3e.</li>
 <li>The data are taken from the <a href="http://wps.pearsoned.co.uk/ema_ge_stock_ieupdate_3/251/64413/16489872.cw/index.html" target="_blank">Companion Website</a> for Introduction to Econometrics book.</li>
 </ul>
 </div>
-<div id="linear-regression" class="section level1">
-<h1>Linear Regression</h1>
+<div id="one-two" class="section level1">
+<h1>1.2 Linear Regression</h1>
 <p><strong>Objective : Generate Figure 4.2</strong></p>
 <pre><code>## Registered S3 methods overwritten by &#39;tibble&#39;:
 ##   method     from  
@@ -115,8 +124,8 @@ Figure 2: Scatterplot of TestScore vs Student-Teacher ratio (California School D
 </div>
 </div>
 </div>
-<div id="the-ols-estimator" class="section level1">
-<h1>The OLS estimator</h1>
+<div id="one-three" class="section level1">
+<h1>1.3 The OLS estimator</h1>
 <p>Consider <strong>Table 4.1</strong> in the textbook which gives the summary of the distribution of student-teacher ratio and test scores.</p>
 <pre><code>##               Average StandardDeviation quantile.10. quantile.25. quantile.40.
 ## quant_str    19.64043          1.891812      17.3486     18.58236     19.26618
@@ -234,8 +243,8 @@ yhat</code></pre>
 ##   631.9978   627.0278   618.6381</code></pre>
 </div>
 </div>
-<div id="measures-of-fit" class="section level1">
-<h1>Measures of fit</h1>
+<div id="one-four" class="section level1">
+<h1>1.4 Measures of fit</h1>
 <div id="the-r2" class="section level2 build">
 <h2>The <span class="math inline">\(R^2\)</span></h2>
 <ul>
@@ -269,8 +278,8 @@ n &lt;- nrow(caschool)
 <pre><code>## [1] 18.58097</code></pre>
 </div>
 </div>
-<div id="the-sensitivity-of-ols-to-large-outliers." class="section level1">
-<h1>The sensitivity of OLS to large outliers.</h1>
+<div id="one-five" class="section level1">
+<h1>1.5 The sensitivity of OLS to large outliers.</h1>
 <p><strong>Fig 4.5</strong>
 <img src="/econ0891/1-LinearRegressionWithSingleRegressor_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
 <div id="section-3" class="section level2 smaller">
@@ -300,8 +309,8 @@ legend(&quot;topleft&quot;,
        lty = 1, col = c(&quot;black&quot;, &quot;red&quot;))</code></pre>
 </div>
 </div>
-<div id="exercise" class="section level1">
-<h1>Exercise</h1>
+<div id="one-six" class="section level1">
+<h1>1.6 Exercise</h1>
 <ol style="list-style-type: decimal">
 <li>You will find the data file <a href="Growth.xlsx">Growth.xlsx</a> and description file <a href="Growth_Description.pdf" target="_blank">Growth_Description.pdf</a> for the following questions.</li>
 </ol>
