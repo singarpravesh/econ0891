@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>A Hugo website</title>
+    <title>ECON0891</title>
     <link>/</link>
-    <description>Recent content on A Hugo website</description>
+    <description>Recent content on ECON0891</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <lastBuildDate>Wed, 31 Mar 2021 00:00:00 +0000</lastBuildDate>
@@ -17,7 +17,18 @@
       <pubDate>Wed, 31 Mar 2021 00:00:00 +0000</pubDate>
       
       <guid>/econ0891/1-linearregressionwithsingleregressor/</guid>
-      <description></description>
+      <description>IntroductionReference book (Theory): Introduction to Econometrics by Stock and Watson, 3e.The data are taken from the Companion Website for Introduction to Econometrics book.Linear RegressionObjective : Generate Figure 4.2
+## Registered S3 methods overwritten by &amp;#39;tibble&amp;#39;:## method from ## format.tbl pillar## print.tbl pillarFigure 1: Scatterplot of TestScore vs Student-Teacher ratio (California School District DataObjective : Generate Figure 4.</description>
+    </item>
+    
+    <item>
+      <title>2: Linear Regression with Multiple Regressors</title>
+      <link>/econ0891/2-linearregressionwithmultipleregressors/</link>
+      <pubDate>Tue, 30 Mar 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/econ0891/2-linearregressionwithmultipleregressors/</guid>
+      <description>IntroductionReference book (Theory): Introduction to Econometrics by Stock and Watson, 3e.The data are taken from the Companion Website for Introduction to Econometrics book.Omitted variable biasExample #1: Percentage of English learners
+What was our previous assessment about testscr?We estimated the linear model \(\hat{testscr} = 698.9-2.27\times str\)Interpretation: Class with higher str i.e. larger class size tend to have lower testscr.</description>
     </item>
     
     <item>

@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
+
+
+<title>2: Linear Regression with Multiple Regressors - ECON0891</title>
+<meta property="og:title" content="2: Linear Regression with Multiple Regressors - ECON0891">
+
+
+  <link href='/favicona.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/pt.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/announcement/">Announcement</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+
+    <h1 class="article-title">2: Linear Regression with Multiple Regressors</h1>
+
+    
+
+    <div class="article-content">
+      
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<ul>
+<li>Reference book (Theory): <strong>Introduction to Econometrics</strong> by <em>Stock and Watson</em>, 3e.</li>
+<li>The data are taken from the <a href="http://wps.pearsoned.co.uk/ema_ge_stock_ieupdate_3/251/64413/16489872.cw/index.html" target="_blank">Companion Website</a> for Introduction to Econometrics book.</li>
+</ul>
+</div>
+<div id="omitted-variable-bias" class="section level1">
+<h1>Omitted variable bias</h1>
+<div id="section" class="section level2 smaller">
+<h2></h2>
+<p><strong>Example #1: Percentage of English learners</strong></p>
+<blockquote>
+<ul>
+<li>What was our previous assessment about <code>testscr</code>?
+<ul>
+<li>We estimated the linear model <span class="math inline">\(\hat{testscr} = 698.9-2.27\times str\)</span></li>
+<li>Interpretation: Class with higher <code>str</code> i.e. larger class size tend to have lower <code>testscr</code>.</li>
+</ul></li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Reasons for considering 𝑒𝑙_𝑝𝑐𝑡 as omitted variable;
+<ul>
+<li>Large immigration population in California</li>
+<li>Students in the district who are still learning English.</li>
+<li>Students who are still learning English might perform worse on standardized tests as compared to native English speakers.</li>
+<li>The larger class sizes <code>str</code> might also have students still learning English. Therefore, considering the OLS estimate <span class="math inline">\(\hat{testscr} = 698.9-2.27\times str\)</span>, the policy would be considering lowering the <code>str</code> value to improve <code>testscr</code>. But this might not solve the problem because of the English learning students in the class.</li>
+</ul></li>
+</ul>
+</blockquote>
+<hr />
+<p><strong>Omitted Variable Bias in Regression With a Single Regressor</strong></p>
+<ul>
+<li>Omitted variable bias is the bias in the OLS estimator that arises when the regressor, X, is correlated with an omitted variable.</li>
+<li>For omitted variable bias to occur, two conditions must be true:
+<ul>
+<li>X is correlated with the omitted variable.</li>
+<li>The omitted variable is a determinant of the dependent variable, Y</li>
+</ul></li>
+</ul>
+<hr />
+<p><strong>The omitted variable</strong></p>
+<ul>
+<li>Dataset: <code>caschool</code></li>
+<li>Omitted variable in <code>lm_model1</code>: the prevalence in the school district of students who are still learning English.</li>
+<li>Recreate Table 6.1 in the book.</li>
+</ul>
+<hr />
+<p><strong>Table 6.1: Difference in test scores between districts with low and high student–teacher ratios, broken down by the quartile of the percentage of English learners. </strong></p>
+<pre><code>## Registered S3 methods overwritten by &#39;tibble&#39;:
+##   method     from  
+##   format.tbl pillar
+##   print.tbl  pillar</code></pre>
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+D=1<br> Smaller Class
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+D=0 <br> Larger Class
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Difference in<br> test scores
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+AverageTestScore
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+AverageTestScore
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+Difference
+</th>
+<th style="text-align:right;">
+tstatistic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+&lt; 1.9%
+</td>
+<td style="text-align:right;">
+664.47
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+665.37
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+-0.9
+</td>
+<td style="text-align:right;">
+-0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+1.9-8.8%
+</td>
+<td style="text-align:right;">
+665.16
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+661.83
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+3.3
+</td>
+<td style="text-align:right;">
+1.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+8.8-23.0%
+</td>
+<td style="text-align:right;">
+654.88
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+649.71
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:right;">
+5.2
+</td>
+<td style="text-align:right;">
+1.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+&gt;23.0%
+</td>
+<td style="text-align:right;">
+636.73
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+634.84
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+1.9
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="section-1" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># data
+caschool &lt;- readxl::read_xlsx(&#39;~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx&#39;)
+
+# create D and append
+caschool$D &lt;- as.factor(ifelse(caschool$str &lt; 20, 1, 0))
+
+# check the dataset
+head(caschool$D, 10)</code></pre>
+<pre><code>##  [1] 1 0 1 1 1 0 1 0 1 0
+## Levels: 0 1</code></pre>
+</div>
+<div id="section-2" class="section level2 smaller">
+<h2></h2>
+<p>Code</p>
+<pre class="r"><code># create different groups
+# for D == 1 (STR &lt; 20)
+D1group1 &lt;- caschool[caschool$D == 1 &amp; caschool$el_pct &lt; 1.9, ]
+D1group2 &lt;- caschool[caschool$D == 1 &amp; caschool$el_pct &gt;= 1.9 &amp; caschool$el_pct &lt; 8.8, ]
+D1group3 &lt;- caschool[caschool$D == 1 &amp; caschool$el_pct &gt;= 8.8 &amp; caschool$el_pct &lt;= 23, ]
+D1group4 &lt;- caschool[caschool$D == 1 &amp; caschool$el_pct &gt; 23, ]
+
+# for D == 0 (STR &gt;= 20)
+D0group1 &lt;- caschool[caschool$D == 0 &amp; caschool$el_pct &lt; 1.9, ]
+D0group2 &lt;- caschool[caschool$D == 0 &amp; caschool$el_pct &gt;= 1.9 &amp; caschool$el_pct &lt; 8.8, ]
+D0group3 &lt;- caschool[caschool$D == 0 &amp; caschool$el_pct &gt;= 8.8 &amp; caschool$el_pct &lt;= 23, ]
+D0group4 &lt;- caschool[caschool$D == 0 &amp; caschool$el_pct &gt; 23, ]
+
+# calculate the average test scores for D == 1 (STR &lt; 20)
+AverageD1group1 &lt;- round(mean(D1group1$testscr), digits = 2)
+AverageD1group2 &lt;- round(mean(D1group2$testscr), digits = 2)
+AverageD1group3 &lt;- round(mean(D1group3$testscr), digits = 2)
+AverageD1group4 &lt;- round(mean(D1group4$testscr), digits = 2)
+
+
+# calculate the average test scores for D == 0 (STR &gt;= 20)
+AverageD0group1 &lt;- round(mean(D0group1$testscr), digits = 2)
+AverageD0group2 &lt;- round(mean(D0group2$testscr), digits = 2)
+AverageD0group3 &lt;- round(mean(D0group3$testscr), digits = 2)
+AverageD0group4 &lt;- round(mean(D0group4$testscr), digits = 2)</code></pre>
+</div>
+<div id="section-3" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># ...contd
+# calculate the counts of test scores for D == 1 (STR &lt; 20)
+nrowD1group1 &lt;- nrow(D1group1)
+nrowD1group2 &lt;- nrow(D1group2)
+nrowD1group3 &lt;- nrow(D1group3)
+nrowD1group4 &lt;- nrow(D1group4)
+
+
+# calculate the nrows of test scores for D == 0 (STR &gt;= 20)
+nrowD0group1 &lt;- nrow(D0group1)
+nrowD0group2 &lt;- nrow(D0group2)
+nrowD0group3 &lt;- nrow(D0group3)
+nrowD0group4 &lt;- nrow(D0group4)
+
+# Difference in test scores
+group1 &lt;- caschool[caschool$el_pct &lt; 1.9, ]
+group2 &lt;- caschool[caschool$el_pct &gt;= 1.9 &amp; caschool$el_pct &lt; 8.8, ]
+group3 &lt;- caschool[caschool$el_pct &gt;= 8.8 &amp; caschool$el_pct &lt;= 23, ]
+group4 &lt;- caschool[caschool$el_pct &gt; 23, ]
+
+# regression
+group1_model &lt;- lm(testscr ~ D, data = group1)
+group2_model &lt;- lm(testscr ~ D, data = group2)
+group3_model &lt;- lm(testscr ~ D, data = group3)
+group4_model &lt;- lm(testscr ~ D, data = group4)</code></pre>
+</div>
+<div id="section-4" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># ...contd
+# data frame
+
+Table &lt;- data.frame(
+  row.names = c(&quot;&lt; 1.9%&quot;, &quot;1.9-8.8%&quot;, &quot;8.8-23.0%&quot;, &quot;&gt;23.0%&quot;),
+  AverageTestScore = c(AverageD1group1, AverageD1group2, AverageD1group3, AverageD1group4),
+  n = c(nrowD1group1, nrowD1group2, nrowD1group3, nrowD1group4),
+  AverageTestScore = c(AverageD0group1, AverageD0group2, AverageD0group3, AverageD0group4),
+  n = c(nrowD0group1, nrowD0group2, nrowD0group3, nrowD0group4), 
+  Difference = c(round(group1_model[[1]][2], digits = 1), 
+                 round(group2_model[[1]][2], digits = 1),
+                 round(group3_model[[1]][2], digits = 1),
+                 round(group4_model[[1]][2], digits = 1)),
+  tstatistic = c(round(summary(group1_model)$coefficients[2,3], digits = 1), 
+                 round(summary(group2_model)$coefficients[2,3], digits = 1),
+                 round(summary(group3_model)$coefficients[2,3], digits = 1),
+                 round(summary(group4_model)$coefficients[2,3], digits = 1)),
+  check.names = FALSE
+)</code></pre>
+<hr />
+<pre class="r"><code># ...contd
+Table1 &lt;- kableExtra::kable(Table, &quot;html&quot;)
+Table2 &lt;-kableExtra::add_header_above(Table1, c(&quot;&quot;, &quot;D=1&quot; = 2, 
+                    &quot;D=0&quot; = 2, &quot;Difference in\n test scores&quot; = 2))
+kableExtra::kable_styling(Table2, bootstrap_options = c(&quot;striped&quot;))</code></pre>
+<table class="table table-striped" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="empty-cells: hide;border-bottom:hidden;" colspan="1">
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+D=1
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+D=0
+</div>
+</th>
+<th style="border-bottom:hidden;padding-bottom:0; padding-left:3px;padding-right:3px;text-align: center; " colspan="2">
+<div style="border-bottom: 1px solid #ddd; padding-bottom: 5px; ">
+Difference in<br> test scores
+</div>
+</th>
+</tr>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+AverageTestScore
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+AverageTestScore
+</th>
+<th style="text-align:right;">
+n
+</th>
+<th style="text-align:right;">
+Difference
+</th>
+<th style="text-align:right;">
+tstatistic
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+&lt; 1.9%
+</td>
+<td style="text-align:right;">
+664.47
+</td>
+<td style="text-align:right;">
+76
+</td>
+<td style="text-align:right;">
+665.37
+</td>
+<td style="text-align:right;">
+27
+</td>
+<td style="text-align:right;">
+-0.9
+</td>
+<td style="text-align:right;">
+-0.3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+1.9-8.8%
+</td>
+<td style="text-align:right;">
+665.16
+</td>
+<td style="text-align:right;">
+64
+</td>
+<td style="text-align:right;">
+661.83
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+3.3
+</td>
+<td style="text-align:right;">
+1.1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+8.8-23.0%
+</td>
+<td style="text-align:right;">
+654.88
+</td>
+<td style="text-align:right;">
+54
+</td>
+<td style="text-align:right;">
+649.71
+</td>
+<td style="text-align:right;">
+50
+</td>
+<td style="text-align:right;">
+5.2
+</td>
+<td style="text-align:right;">
+1.7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+&gt;23.0%
+</td>
+<td style="text-align:right;">
+636.73
+</td>
+<td style="text-align:right;">
+44
+</td>
+<td style="text-align:right;">
+634.84
+</td>
+<td style="text-align:right;">
+61
+</td>
+<td style="text-align:right;">
+1.9
+</td>
+<td style="text-align:right;">
+0.7
+</td>
+</tr>
+</tbody>
+</table>
+<hr />
+<p><strong>Addressing Omitted Variable Bias by Dividing the Data into Groups</strong></p>
+<ul>
+<li>The table can be a <em>matrix</em> or a <em>dataframe</em>.</li>
+<li>Recall the <code>lm_dummy</code> model done earlier. Here,
+<ol style="list-style-type: decimal">
+<li>you need to subset <code>caschool</code> into various groups of <em>percentage of english learners</em> as specified in Table 6.1</li>
+<li>Apply the same method as in <code>lm_dummy</code> for all the groups.</li>
+</ol></li>
+</ul>
+<hr />
+<p>Contd…</p>
+<ol start=3>
+<li>
+<p>You can extract the coefficients and the <span class="math inline">\(t\)</span>-values from all the models with the following codes (as done earlier too). This one is an example from <code>lm_dummy</code>.</p>
+<pre class="r"><code># extract intercept coefficient (beta 0) for `lm_dummy`
+coef(lm_dummy)[[1]]
+
+# extract slope coefficient (beta 1) for `lm_dummy`
+coef(lm_dummy)[[2]]
+
+# extract the t-value for `lm_dummy`
+summary(lm_dummy)[[4]][,3, drop = FALSE]</code></pre>
+<li>
+Construct a <em>matrix</em> or a <em>data frame</em> to summarise your results in a tabular form as close as Table 6.1
+</li>
+</div>
+</div>
+<div id="the-multiple-regression-model" class="section level1">
+<h1>The Multiple Regression Model</h1>
+<div id="section-5" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li>Our multiple regression model is
+<span class="math display">\[
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL
+\]</span>
+where <span class="math inline">\(PctEL\)</span> is the percentage of students in the district who are English learners.</li>
+</ul>
+<pre class="r"><code># data
+caschool &lt;- readxl::read_xlsx(&#39;~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx&#39;)
+
+# summary stats for the three variables
+summary(caschool[c(&quot;testscr&quot;, &quot;str&quot;, &quot;el_pct&quot;)])</code></pre>
+<pre><code>##     testscr           str            el_pct      
+##  Min.   :605.5   Min.   :14.00   Min.   : 0.000  
+##  1st Qu.:640.0   1st Qu.:18.58   1st Qu.: 1.941  
+##  Median :654.5   Median :19.72   Median : 8.778  
+##  Mean   :654.2   Mean   :19.64   Mean   :15.768  
+##  3rd Qu.:666.7   3rd Qu.:20.87   3rd Qu.:22.970  
+##  Max.   :706.8   Max.   :25.80   Max.   :85.540</code></pre>
+</div>
+<div id="section-6" class="section level2 smaller">
+<h2></h2>
+<p><strong>Estimated model</strong></p>
+<pre class="r"><code>lm_multi &lt;- lm(testscr ~ str + el_pct, data = caschool)
+summary(lm_multi)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str + el_pct, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -48.845 -10.240  -0.308   9.815  43.461 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 686.03225    7.41131  92.566  &lt; 2e-16 ***
+## str          -1.10130    0.38028  -2.896  0.00398 ** 
+## el_pct       -0.64978    0.03934 -16.516  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 14.46 on 417 degrees of freedom
+## Multiple R-squared:  0.4264, Adjusted R-squared:  0.4237 
+## F-statistic:   155 on 2 and 417 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div id="section-7" class="section level2 smaller">
+<h2></h2>
+<p><strong>Compare the coefficients in <code>lm_model1</code> and <code>lm_multi</code>.</strong></p>
+<pre class="r"><code>lm_model1</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str, data = caschool)
+## 
+## Coefficients:
+## (Intercept)          str  
+##      698.93        -2.28</code></pre>
+<pre class="r"><code>lm_multi</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str + el_pct, data = caschool)
+## 
+## Coefficients:
+## (Intercept)          str       el_pct  
+##    686.0322      -1.1013      -0.6498</code></pre>
+<hr />
+<p><strong>Observations:</strong></p>
+<ul>
+<li>In <code>lm_model1</code>, a unit decrease in the <span class="math inline">\(STR\)</span> is estimated to increase test scores by 2.28 points, but in the <code>lm_multi</code>, it is estimated to increase test scores by only 1.10 points.</li>
+<li>This difference occurs because the coefficient on <span class="math inline">\(STR\)</span> in the multiple regression is the effect of a change in <span class="math inline">\(STR\)</span>, holding constant (or controlling for) <span class="math inline">\(PctEL\)</span>, whereas in the single-regressor regression, <span class="math inline">\(PctEL\)</span> is not held constant.</li>
+<li>These two estimates can be reconciled by concluding that there is omitted
+variable bias in the estimate in the single-regressor model <code>lm_model1</code>.</li>
+</ul>
+</div>
+</div>
+<div id="multicollinearity" class="section level1">
+<h1>Multicollinearity</h1>
+<hr />
+<p><strong>Example #1: Fraction of English learners</strong></p>
+<p>Consider the following model, where we add another variable
+<span class="math display">\[FracEL = \frac{\text{el_pct}}{100}\]</span> i.e. the fraction of english learners to <code>lm_multi</code>.</p>
+<pre class="r"><code># define and append the variable
+caschool$FracEL &lt;- caschool$el_pct/100</code></pre>
+<div id="section-8" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<pre class="r"><code># estimate the model
+lm_multi1 &lt;- lm(testscr ~ str + el_pct + FracEL, data = caschool)
+summary(lm_multi1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str + el_pct + FracEL, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -48.845 -10.240  -0.308   9.815  43.461 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 686.03225    7.41131  92.566  &lt; 2e-16 ***
+## str          -1.10130    0.38028  -2.896  0.00398 ** 
+## el_pct       -0.64978    0.03934 -16.516  &lt; 2e-16 ***
+## FracEL             NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 14.46 on 417 degrees of freedom
+## Multiple R-squared:  0.4264, Adjusted R-squared:  0.4237 
+## F-statistic:   155 on 2 and 417 DF,  p-value: &lt; 2.2e-16</code></pre>
+<hr />
+<p><strong>Example #2: “Not very small” classes.</strong></p>
+<p>Let <span class="math inline">\(NVS_i\)</span> be a binary variable that equals 1 if the student–teacher ratio in the <span class="math inline">\(i^th\)</span> district is “not very small,” specifically, <span class="math inline">\(NVS_i\)</span> equals 1 if <span class="math inline">\(STR_i \geq 12\)</span> and equals 0 otherwise.</p>
+<p><span class="math display">\[
+NVS_i = \begin{cases} 
+1, \ \ \text{if  STR} \geq 12 \\ 
+0, \ \ \text{otherwise.} \\
+\end{cases}
+\]</span></p>
+<pre class="r"><code># define and appemd the variable
+caschool$nvs &lt;- ifelse(caschool$str &gt;= 12, 1, 0)
+table(caschool$nvs)</code></pre>
+<pre><code>## 
+##   1 
+## 420</code></pre>
+</div>
+<div id="section-9" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<p>Our other covariates include <code>read_scr</code> and <code>computer</code>.</p>
+<pre class="r"><code># estimate the model
+lm_nvs &lt;- lm(testscr ~ read_scr + computer + nvs, data = caschool)
+summary(lm_nvs)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ read_scr + computer + nvs, data = caschool)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -12.9194  -2.2465   0.1199   2.0311  11.9624 
+## 
+## Coefficients: (1 not defined because of singularities)
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 4.206e+01  5.719e+00   7.354 1.03e-12 ***
+## read_scr    9.339e-01  8.706e-03 107.262  &lt; 2e-16 ***
+## computer    1.455e-03  3.967e-04   3.667 0.000277 ***
+## nvs                NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.562 on 417 degrees of freedom
+## Multiple R-squared:  0.9652, Adjusted R-squared:  0.965 
+## F-statistic:  5785 on 2 and 417 DF,  p-value: &lt; 2.2e-16</code></pre>
+<hr />
+<p><strong>Observations:</strong></p>
+<ul>
+<li>Recall that the linear regression model with an intercept
+can equivalently be thought of as including a regressor, <span class="math inline">\(X_{0i}\)</span>, that equals 1 for all i.</li>
+<li>Thus we can write <span class="math inline">\(NVS_i = 1 * X_{0i}\)</span> for all the observations in our data set; that is, <span class="math inline">\(NVS_i\)</span> can be written as a perfect linear combination of the regressors; specifically, it equals <span class="math inline">\(X_{0i}\)</span>.</li>
+<li>While it is possible to imagine a school district with fewer than 12 students per teacher, there are no such districts in our data set so we cannot analyze them in our regression.</li>
+</ul>
+<hr />
+<p><strong>The dummy variable trap</strong></p>
+<ul>
+<li><strong>Cause:</strong> Use of multiple binary, or dummy, variables as regressors.</li>
+<li><strong>Example:</strong> Partition the school districts into three categories: <em>rural</em>, <em>suburban</em>, and <em>urban</em> and create <strong>three</strong> binary variables.
+<span class="math display">\[
+rural_i = \begin{cases}
+1, \ \ \text{rural district}\\
+0, \ \ \text{otherwise}
+\end{cases}
+\]</span>
+<span class="math display">\[
+suburban_i = \begin{cases}
+1, \ \ \text{suburban district} \\
+0,  \ \ \text{otherwise}
+\end{cases}
+\]</span>
+<span class="math display">\[
+urban_i = \begin{cases}
+1, \ \ \text{urban district}\\
+0, \ \ \text{otherwise}
+\end{cases}
+\]</span></li>
+</ul>
+<hr />
+<p>contd…</p>
+<p><strong>Create and append a variable <code>region</code> to the dataset</strong></p>
+<pre class="r"><code># set seed for reproducibility
+set.seed(1234)
+
+# create the variable &#39;region&#39;
+caschool$region &lt;- as.factor(sample(c(&quot;rural&quot;, &quot;suburban&quot;, &quot;urban&quot;),
+                          size = nrow(caschool), replace = TRUE))
+table(caschool$region)</code></pre>
+<pre><code>## 
+##    rural suburban    urban 
+##      120      146      154</code></pre>
+</div>
+<div id="section-10" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<p><strong>Create and append the 3 binary variables to the dataset</strong></p>
+<pre class="r"><code># create a subset of &#39;caschool&#39;
+caschool_region &lt;- caschool[, c(&quot;testscr&quot;, &quot;computer&quot;, &quot;read_scr&quot;,&quot;region&quot;)]
+
+# create and append the binary variables
+caschool_region$rural &lt;- as.factor(
+  ifelse(caschool_region$region == &quot;rural&quot;, 1, 0))
+
+caschool_region$suburban &lt;- as.factor(
+  ifelse(caschool_region$region == &quot;suburban&quot;, 1, 0))
+
+caschool_region$urban &lt;- as.factor(
+  ifelse(caschool_region$region == &quot;urban&quot;, 1, 0))
+
+# check
+str(caschool_region)</code></pre>
+<pre><code>## tibble [420 x 7] (S3: tbl_df/tbl/data.frame)
+##  $ testscr : num [1:420] 691 661 644 648 641 ...
+##  $ computer: num [1:420] 67 101 169 85 171 25 28 66 35 0 ...
+##  $ read_scr: num [1:420] 692 660 636 652 642 ...
+##  $ region  : Factor w/ 3 levels &quot;rural&quot;,&quot;suburban&quot;,..: 2 2 1 3 1 1 2 2 3 2 ...
+##  $ rural   : Factor w/ 2 levels &quot;0&quot;,&quot;1&quot;: 1 1 2 1 2 2 1 1 1 1 ...
+##  $ suburban: Factor w/ 2 levels &quot;0&quot;,&quot;1&quot;: 2 2 1 1 1 1 2 2 1 2 ...
+##  $ urban   : Factor w/ 2 levels &quot;0&quot;,&quot;1&quot;: 1 1 1 2 1 1 1 1 2 1 ...</code></pre>
+</div>
+<div id="section-11" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<pre class="r"><code># estimate the regression
+summary(lm_region &lt;- lm(testscr ~ read_scr + computer +
+                  rural + suburban + urban, data = caschool_region))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ read_scr + computer + rural + suburban + 
+##     urban, data = caschool_region)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -12.6258  -2.2777   0.0769   2.0196  11.7926 
+## 
+## Coefficients: (1 not defined because of singularities)
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 42.5008370  5.7671817   7.369 9.35e-13 ***
+## read_scr     0.9334510  0.0087436 106.758  &lt; 2e-16 ***
+## computer     0.0014507  0.0003971   3.654 0.000292 ***
+## rural1      -0.0324213  0.4355625  -0.074 0.940700    
+## suburban1   -0.4545179  0.4126712  -1.101 0.271359    
+## urban1              NA         NA      NA       NA    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.565 on 415 degrees of freedom
+## Multiple R-squared:  0.9653, Adjusted R-squared:  0.965 
+## F-statistic:  2889 on 4 and 415 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div id="section-12" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<p><strong>Observations</strong></p>
+<blockquote>
+<ul>
+<li>To estimate the regression, you must exclude one of these four variables, either one of the binary indicators or the constant term.</li>
+<li>By convention, the constant term is retained, in which case one of the binary indicators is excluded.</li>
+<li>For example, if <span class="math inline">\(rural_i\)</span> were excluded, then the coefficient on <span class="math inline">\(suburban_i\)</span> would be the average difference between test scores in <em>suburban</em> and <em>rural</em> districts, holding constant the other variables in the regression.</li>
+<li>In general, if there are <strong>G</strong> binary variables, if each observation falls into one
+and only one category, if there is an intercept in the regression, and if all <strong>G</strong> binary variables are included as regressors, then the <em>regression will fail</em> because of perfect multicollinearity. This situation is called the <strong>dummy variable trap</strong>.</li>
+</ul>
+</blockquote>
+</div>
+<div id="section-13" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<p>Exclude <code>rural</code> and run the regression, or …</p>
+<pre class="r"><code>summary(lm_region1 &lt;- lm(testscr ~ read_scr + computer +
+                  suburban + urban, data = caschool_region))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ read_scr + computer + suburban + urban, 
+##     data = caschool_region)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -12.6258  -2.2777   0.0769   2.0196  11.7926 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 42.4684156  5.7357671   7.404 7.42e-13 ***
+## read_scr     0.9334510  0.0087436 106.758  &lt; 2e-16 ***
+## computer     0.0014507  0.0003971   3.654 0.000292 ***
+## suburban1   -0.4220966  0.4393684  -0.961 0.337268    
+## urban1       0.0324213  0.4355625   0.074 0.940700    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.565 on 415 degrees of freedom
+## Multiple R-squared:  0.9653, Adjusted R-squared:  0.965 
+## F-statistic:  2889 on 4 and 415 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+<div id="section-14" class="section level2 smaller">
+<h2></h2>
+<p>contd…</p>
+<p>… R can do it automatically for you.</p>
+<pre class="r"><code>summary(lm_region2 &lt;- lm(testscr ~ read_scr + computer +
+                  region, data = caschool_region))</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ read_scr + computer + region, data = caschool_region)
+## 
+## Residuals:
+##      Min       1Q   Median       3Q      Max 
+## -12.6258  -2.2777   0.0769   2.0196  11.7926 
+## 
+## Coefficients:
+##                  Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)    42.4684156  5.7357671   7.404 7.42e-13 ***
+## read_scr        0.9334510  0.0087436 106.758  &lt; 2e-16 ***
+## computer        0.0014507  0.0003971   3.654 0.000292 ***
+## regionsuburban -0.4220966  0.4393684  -0.961 0.337268    
+## regionurban     0.0324213  0.4355625   0.074 0.940700    
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 3.565 on 415 degrees of freedom
+## Multiple R-squared:  0.9653, Adjusted R-squared:  0.965 
+## F-statistic:  2889 on 4 and 415 DF,  p-value: &lt; 2.2e-16</code></pre>
+</div>
+</div>
+<div id="exercise" class="section level1">
+<h1>Exercise</h1>
+<div id="section-15" class="section level2 smaller">
+<h2></h2>
+<p>E6.1 Use the <a href="birthweight_smoking.xlsx">birthweight_smoking</a> data set introduced in Empirical Exercise E5.3 to answer the following questions. You can read the data description <a href="Birthweight_Smoking_Description.pdf" target="_blank">here</a></p>
+<p>(a). Regress <code>Birthweight</code> on <code>Smoker</code>. What is the estimated effect of smoking on birth weight?</p>
+<p>(b). Regress <code>Birthweight</code> on <code>Smoker</code>, <code>Alcohol</code>, and <code>Nprevist</code>.</p>
+<p>(i). Using the two conditions in Key Concept 6.1, explain why the exclusion of <code>Alcohol</code> and <code>Nprevist</code> could lead to omitted variable bias in the regression estimated in (a).</p>
+<p>(ii). Is the estimated effect of smoking on birth weight substantially different from the regression that excludes <code>Alcohol</code> and <code>Nprevist</code>? Does the regression in (a) seem to suffer from omitted variable bias?</p>
+<p>(iii). Jane smoked during her pregnancy, did not drink alcohol, and had 8 prenatal care visits. Use the regression to predict the birth weight of Jane’s child.</p>
+</div>
+<div id="section-16" class="section level2 smaller">
+<h2></h2>
+<p>E6.2 Using the data set <a href="Growth.xlsx">Growth</a> described in Empirical Exercise E4.1, but excluding the data for Malta, carry out the following exercises.</p>
+<p>(a). Construct a table that shows the sample mean, standard deviation, and minimum and maximum values for the series <code>Growth</code>, <code>TradeShare</code>, <code>YearsSchool</code>, <code>Oil</code>, <code>Rev_Coups</code>, <code>Assassinations</code>, and <code>RGDP60</code>. Include the appropriate units for all entries.</p>
+<p>(b). Run a regression of <code>Growth</code> on <code>TradeShare</code>, <code>YearsSchool</code>, <code>Rev_Coups</code>, <code>Assassinations</code>, and <code>RGDP60</code>. What is the value of the coefficient on <code>Rev_Coups</code>? Interpret the value of this coefficient. Is it large or small in a real-world sense?</p>
+<p>(c). Use the regression to predict the average annual growth rate for a country that has average values for all regressors.</p>
+<p>(d). Repeat (c) but now assume that the country’s value for <code>TradeShare</code> is one standard deviation above the mean.</p>
+<p>(e). Why is <code>Oil</code> omitted from the regression? What would happen if it were included?</p>
+</div>
+</div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

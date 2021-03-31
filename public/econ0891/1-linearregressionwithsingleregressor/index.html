@@ -6,8 +6,8 @@
 <meta name="generator" content="Hugo 0.74.3" />
 
 
-<title>1: Linear Regression with Single Regressor - A Hugo website</title>
-<meta property="og:title" content="1: Linear Regression with Single Regressor - A Hugo website">
+<title>1: Linear Regression with Single Regressor - ECON0891</title>
+<meta property="og:title" content="1: Linear Regression with Single Regressor - ECON0891">
 
 
   <link href='/favicona.ico' rel='icon' type='image/x-icon'/>
@@ -19,6 +19,11 @@
 
 
 
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
 
 
 
@@ -62,7 +67,273 @@
       
 
 
+<div id="introduction" class="section level2">
+<h2>Introduction</h2>
+<ul>
+<li>Reference book (Theory): <strong>Introduction to Econometrics</strong> by <em>Stock and Watson</em>, 3e.</li>
+<li>The data are taken from the <a href="http://wps.pearsoned.co.uk/ema_ge_stock_ieupdate_3/251/64413/16489872.cw/index.html" target="_blank">Companion Website</a> for Introduction to Econometrics book.</li>
+</ul>
+</div>
+<div id="linear-regression" class="section level1">
+<h1>Linear Regression</h1>
+<p><strong>Objective : Generate Figure 4.2</strong></p>
+<pre><code>## Registered S3 methods overwritten by &#39;tibble&#39;:
+##   method     from  
+##   format.tbl pillar
+##   print.tbl  pillar</code></pre>
+<div class="figure"><span id="fig:unnamed-chunk-1"></span>
+<img src="/econ0891/1-LinearRegressionWithSingleRegressor_files/figure-html/unnamed-chunk-1-1.png" alt="Scatterplot of TestScore vs Student-Teacher ratio (California School District Data" width="672" />
+<p class="caption">
+Figure 1: Scatterplot of TestScore vs Student-Teacher ratio (California School District Data
+</p>
+</div>
+<p><strong>Objective : Generate Figure 4.2</strong></p>
+<pre class="r"><code># read the data
+caschool &lt;- readxl::read_xlsx(&quot;~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx&quot;)
 
+# check the structure of the loaded dataset
+str(caschool)</code></pre>
+<p>Check the description of the dataset caschool.xlsx <a href="californiatestscores.docx" target="_blank">here</a></p>
+<pre class="r"><code>names(caschool)</code></pre>
+<pre><code>##  [1] &quot;Observation Number&quot; &quot;dist_cod&quot;           &quot;county&quot;            
+##  [4] &quot;district&quot;           &quot;gr_span&quot;            &quot;enrl_tot&quot;          
+##  [7] &quot;teachers&quot;           &quot;calw_pct&quot;           &quot;meal_pct&quot;          
+## [10] &quot;computer&quot;           &quot;testscr&quot;            &quot;comp_stu&quot;          
+## [13] &quot;expn_stu&quot;           &quot;str&quot;                &quot;avginc&quot;            
+## [16] &quot;el_pct&quot;             &quot;read_scr&quot;           &quot;math_scr&quot;</code></pre>
+<div id="section" class="section level2 smaller vcenter">
+<h2></h2>
+<pre class="r"><code>plot(caschool$testscr ~ caschool$str,
+     xlab = &quot;Student-teacher ratio&quot;,
+     ylab = &quot;Test score&quot;, pch = 20, xlim = c(10,30),
+     ylim = c(600, 720), las = 1)</code></pre>
+<div class="figure"><span id="fig:unnamed-chunk-4"></span>
+<img src="/econ0891/1-LinearRegressionWithSingleRegressor_files/figure-html/unnamed-chunk-4-1.png" alt="Scatterplot of TestScore vs Student-Teacher ratio (California School District Data)" width="672" />
+<p class="caption">
+Figure 2: Scatterplot of TestScore vs Student-Teacher ratio (California School District Data)
+</p>
+</div>
+</div>
+</div>
+<div id="the-ols-estimator" class="section level1">
+<h1>The OLS estimator</h1>
+<p>Consider <strong>Table 4.1</strong> in the textbook which gives the summary of the distribution of student-teacher ratio and test scores.</p>
+<pre><code>##               Average StandardDeviation quantile.10. quantile.25. quantile.40.
+## quant_str    19.64043          1.891812      17.3486     18.58236     19.26618
+## quant_score 654.15655         19.053348     630.3950    640.04999    649.07000
+##             quantile.50. quantile.60. quantile.75. quantile.90.
+## quant_str       19.72321      20.0783     20.87181      21.8674
+## quant_score    654.44998     659.4000    666.66251     678.8600</code></pre>
+<p><strong>Table 4.1</strong></p>
+<pre class="r"><code># compute sample averages of STR and score
+avg_str &lt;- mean(caschool$str) 
+avg_score &lt;- mean(caschool$testscr)
+
+# compute sample standard deviations of STR and score
+sd_str &lt;- sd(caschool$str) 
+sd_score &lt;- sd(caschool$testscr)
+
+# set up a vector of percentiles and compute the quantiles 
+quantiles &lt;- c(0.10, 0.25, 0.4, 0.5, 0.6, 0.75, 0.9)
+quant_str &lt;- quantile(caschool$str, quantiles)
+quant_score &lt;- quantile(caschool$testscr, quantiles)
+
+# gather everything in a data.frame 
+(DistributionSummary &lt;- data.frame(Average = c(avg_str, avg_score), 
+                        StandardDeviation = c(sd_str, sd_score), 
+                        quantile = rbind(quant_str, quant_score)))</code></pre>
+<p>Estimate the regression coefficents in
+<span class="math display">\[
+\hat{TestScore} = \hat{\beta_0} + \hat{\beta_1}STR
+\]</span>
+Where, <span class="math inline">\(TestScore\)</span> is the average test score in the district, and <span class="math inline">\(STR\)</span> is the student-teacher ratio.
+<span class="math display">\[
+\hat{\beta_1} = \frac{\sum{(X_i -\bar{X})(Y_i - \bar{Y})}}{\sum{(X_i - \bar{X})^2}}\\
+\hat{\beta_o} =  \bar{Y} - \hat{\beta_1}\bar{X}
+\]</span></p>
+<ul>
+<li>The <code>lm()</code> function is used to fit a <u><strong>L</strong></u>inear <u><strong>M</strong></u>odel.</li>
+<li>Usage</li>
+</ul>
+<pre class="r"><code>lm(formula, data, subset)</code></pre>
+<ul>
+<li>The California Schools model</li>
+</ul>
+<pre class="r"><code># fit a linear model and save it to an `lm` object
+lm_model1 &lt;- lm(formula = testscr ~ str, data = caschool)
+class(lm_model1)</code></pre>
+<pre><code>## [1] &quot;lm&quot;</code></pre>
+<p>You can directly print the <code>lm_model1</code> output</p>
+<pre class="r"><code>lm_model1</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str, data = caschool)
+## 
+## Coefficients:
+## (Intercept)          str  
+##      698.93        -2.28</code></pre>
+<div id="section-1" class="section level2 smaller">
+<h2></h2>
+<p>Or, you can also print the <code>summary()</code>.</p>
+<pre class="r"><code>summary(lm_model1)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -47.727 -14.251   0.483  12.822  48.540 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 698.9330     9.4675  73.825  &lt; 2e-16 ***
+## str          -2.2798     0.4798  -4.751 2.78e-06 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 18.58 on 418 degrees of freedom
+## Multiple R-squared:  0.05124,    Adjusted R-squared:  0.04897 
+## F-statistic: 22.58 on 1 and 418 DF,  p-value: 2.783e-06</code></pre>
+<ul>
+<li>Now, let’s plot Fig 4.3</li>
+<li>First, we shall extract the coefficients from <code>lm_model1</code></li>
+</ul>
+<pre class="r"><code>b1 &lt;- coef(lm_model1)[[1]]
+b2 &lt;- abs(coef(lm_model1)[[2]])</code></pre>
+<ul>
+<li>We shall also need <code>expr()</code> from <code>rlang</code> package to add Mathematical Annotation in R.</li>
+</ul>
+<pre class="r"><code>library(rlang) </code></pre>
+<ul>
+<li>Use <code>?plotmath()</code> and <code>demo(plotmath)</code> for usage.</li>
+</ul>
+</div>
+<div id="section-2" class="section level2 smaller vcenter">
+<h2></h2>
+<pre class="r"><code>plot(caschool$testscr ~ caschool$str,
+     xlab = &quot;Student-teacher ratio&quot;,
+     ylab = &quot;Test score&quot;, pch = 20, xlim = c(10,30),
+     ylim = c(600, 720), las = 1)
+
+# add the model fit
+abline(lm_model1, col = &quot;blue&quot;, lwd = 2)
+text(25, 710, expr(paste(hat(TestScore)~&quot;=&quot;~ !!b1~&quot;-&quot;~ !!b2~x~STR)), cex = 0.8)
+arrows(25,702, 28,640, length = 0)</code></pre>
+<p><img src="/econ0891/1-LinearRegressionWithSingleRegressor_files/figure-html/unnamed-chunk-13-1.png" width="672" /></p>
+</div>
+<div id="prediction" class="section level2">
+<h2>Prediction</h2>
+<pre class="r"><code># make a vector of new values for `str`.
+new_str &lt;- data.frame(str = c(29.36, 31.54, 35.22))
+
+# predict
+yhat &lt;- predict(lm_model1, new_str)
+names(yhat) &lt;- paste(&quot;str=&quot;, c(29.36, 31.54, 35.22))
+yhat</code></pre>
+<pre><code>## str= 29.36 str= 31.54 str= 35.22 
+##   631.9978   627.0278   618.6381</code></pre>
+</div>
+</div>
+<div id="measures-of-fit" class="section level1">
+<h1>Measures of fit</h1>
+<div id="the-r2" class="section level2 build">
+<h2>The <span class="math inline">\(R^2\)</span></h2>
+<ul>
+<li>Assign the summary of the <code>lm_model1</code> in <code>summary.lm</code> object.</li>
+</ul>
+<pre class="r"><code>s &lt;- summary(lm_model1)
+class(s)</code></pre>
+<pre><code>## [1] &quot;summary.lm&quot;</code></pre>
+</div>
+<div id="the-r2-1" class="section level2 build">
+<h2>The <span class="math inline">\(R^2\)</span></h2>
+<pre class="r"><code>names(s)</code></pre>
+<pre><code>##  [1] &quot;call&quot;          &quot;terms&quot;         &quot;residuals&quot;     &quot;coefficients&quot; 
+##  [5] &quot;aliased&quot;       &quot;sigma&quot;         &quot;df&quot;            &quot;r.squared&quot;    
+##  [9] &quot;adj.r.squared&quot; &quot;fstatistic&quot;    &quot;cov.unscaled&quot;</code></pre>
+<pre class="r"><code># extract and print Rsquared value
+(r2 &lt;- s$r.squared)</code></pre>
+<pre><code>## [1] 0.0512401</code></pre>
+</div>
+<div id="standard-error-of-the-regression-ser" class="section level2">
+<h2>Standard error of the regression (SER)</h2>
+<p><span class="math display">\[
+SER = \sqrt\frac{SSR}{n-2}
+\]</span></p>
+<pre class="r"><code># Compute SSR (Residual sum of squares)
+ssr &lt;- sum(s$residuals^2)
+
+# compute SER
+n &lt;- nrow(caschool)
+(ser &lt;- sqrt(ssr/(n-2)))</code></pre>
+<pre><code>## [1] 18.58097</code></pre>
+</div>
+</div>
+<div id="the-sensitivity-of-ols-to-large-outliers." class="section level1">
+<h1>The sensitivity of OLS to large outliers.</h1>
+<p><strong>Fig 4.5</strong>
+<img src="/econ0891/1-LinearRegressionWithSingleRegressor_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<div id="section-3" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># set seed
+set.seed(123)
+
+# generate the data
+X &lt;- sort(runif(10, min = 30, max = 70))
+Y &lt;- rnorm(10 , mean = 200, sd = 50)
+Y[9] &lt;- 2000
+
+# fit model with outlier
+fit &lt;- lm(Y ~ X)
+
+# fit model without outlier
+fitWithoutOutlier &lt;- lm(Y[-9] ~ X[-9])
+
+# plot the results
+plot(Y ~ X)
+abline(fit)
+abline(fitWithoutOutlier, col = &quot;red&quot;)
+
+legend(&quot;topleft&quot;, 
+       legend = c(&quot;Including outlier&quot;,
+                  &quot;Excluding outlier&quot;),
+       lty = 1, col = c(&quot;black&quot;, &quot;red&quot;))</code></pre>
+</div>
+</div>
+<div id="exercise" class="section level1">
+<h1>Exercise</h1>
+<ol style="list-style-type: decimal">
+<li>You will find the data file <a href="Growth.xlsx">Growth.xlsx</a> and description file <a href="Growth_Description.pdf" target="_blank">Growth_Description.pdf</a> for the following questions.</li>
+</ol>
+<p>(a). Construct a scatterplot of average annual growth rate <em>(Growth)</em> on the average trade share <em>(TradeShare)</em>. Does there appear to be a relationship between the variables?</p>
+<p>(b). One country, Malta, has a trade share much larger than the other countries. Find Malta on the scatterplot. Does Malta look like an outlier?</p>
+<p>(c). Using all observations, run a regression of <em>Growth</em> on <em>TradeShare</em>.
+What is the estimated slope? What is the estimated intercept? Use the regression to predict the growth rate for a country with a trade share of 0.5 and with a trade share equal to 1.0.</p>
+<p>(d). Estimate the same regression, excluding the data from Malta. Answer the same questions in (c).</p>
+<p>(e). Plot the estimated regression functions from (c) and (d). Using the scatterplot in (a), explain why the regression function that includes Malta is steeper than the regression function that excludes Malta.</p>
+<p>(f). Where is Malta? Why is the Malta trade share so large? Should Malta be included or excluded from the analysis?</p>
+<ol start="2" style="list-style-type: decimal">
+<li>You will find the data <a href="&#39;Earnings_and_Height.xlsx&#39;">Earnings_and_Height.xlsx</a> and description file <a href="Earnings_and_Height_Description.pdf" target="_blank">Earnings_and_Height_Description.pdf</a></li>
+</ol>
+<p>(a). What is the median value of height in the sample?</p>
+<p>(b). (i). Estimate average earnings for workers whose height is at most 67 inches.</p>
+<p>(ii). Estimate average earnings for workers whose height is greater than 67 inches.</p>
+<p>(iii). On average, do taller workers earn more than shorter workers? How much more? What is a 95% confidence interval for the difference in average earnings?</p>
+<p>(c). Construct a scatterplot of annual earnings (<em>Earnings</em>) on height (<em>Height</em>). Notice that the points on the plot fall along horizontal lines. (There are only 23 distinct values of Earnings). Why? (Hint: Carefully read the detailed data description.)</p>
+<p>(d). Run a regression of Earnings on Height.</p>
+<p>(i). What is the estimated slope?</p>
+<p>(ii). Use the estimated regression to predict earnings for a worker who is 67 inches tall, for a worker who is 70 inches tall, and for a worker who is 65 inches tall.</p>
+<p>(e). Suppose height were measured in centimeters instead of inches. Answer the following questions about the Earnings on Height (in cm) regression.</p>
+<p>(i). What is the estimated slope of the regression?</p>
+<p>(ii). What is the estimated intercept?</p>
+<p>(iii). What is the <span class="math inline">\(R^2\)</span>?</p>
+<p>(iv). What is the standard error of the regression?</p>
+<p>(f). Run a regression of Earnings on Height, using data for female workers only.</p>
+<p>(i). What is the estimated slope?</p>
+<p>(ii). A randomly selected woman is 1 inch taller than the average woman in the sample. Would you predict her earnings to be higher or lower than the average earnings for women in the sample? By how much?</p>
+<p>(g). Repeat (f) for male workers.</p>
+<p>(h). Do you think that height is uncorrelated with other factors that cause earning? That is, do you think that the regression error term, say <span class="math inline">\(u_i\)</span>, has a conditional mean of zero, given Height (<span class="math inline">\(X_i\)</span>)?</p>
+</div>
 
     </div>
   </article>
@@ -86,7 +357,22 @@
     </div>
     
 
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
     
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
 
     
   </body>

@@ -1,0 +1,549 @@
+--- 
+title: "2: Linear Regression with Multiple Regressors"
+author: "pravesh"
+date: "2021-03-30"
+output: html_document
+---
+
+## Introduction
+- Reference book (Theory): **Introduction to Econometrics** by *Stock and Watson*, 3e.
+- The data are taken from the [Companion Website](http://wps.pearsoned.co.uk/ema_ge_stock_ieupdate_3/251/64413/16489872.cw/index.html){target="_blank"} for Introduction to Econometrics book. 
+
+# Omitted variable bias
+
+## {.smaller}
+
+**Example #1: Percentage of English learners**
+
+>- What was our previous assessment about `testscr`?
+>    - We estimated the linear model $\hat{testscr} = 698.9-2.27\times str$
+>    - Interpretation: Class with higher `str` i.e. larger class size tend to have lower `testscr`.
+
+>- Reasons for considering 𝑒𝑙_𝑝𝑐𝑡 as omitted variable;
+>    - Large immigration population in California
+>    - Students in the district who are still learning English.
+>    - Students who are still learning English might perform worse on standardized tests as compared to native English speakers. 
+>    - The larger class sizes `str` might also have students still learning English. Therefore, considering the OLS estimate $\hat{testscr} = 698.9-2.27\times str$, the policy would be considering lowering the `str` value to improve `testscr`. But this might not solve the problem because of the English learning students in the class.
+
+---
+
+**Omitted Variable Bias in Regression With a Single Regressor**
+
+- Omitted variable bias is the bias in the OLS estimator that arises when the regressor, X, is correlated with an omitted variable. 
+- For omitted variable bias to occur, two conditions must be true:
+    - X is correlated with the omitted variable.
+    - The omitted variable is a determinant of the dependent variable, Y 
+
+
+---
+
+**The omitted variable**
+
+- Dataset: `caschool`
+- Omitted variable in `lm_model1`: the prevalence in the school district of students who are still learning English. 
+- Recreate Table 6.1 in the book. 
+
+
+
+---
+
+**Table 6.1: Difference in test scores between districts with low and high student–teacher ratios, broken down by the quartile of the percentage of English learners. ** 
+```{r, warning=FALSE, echo=FALSE}
+# data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# create D and append
+caschool$D <- as.factor(ifelse(caschool$str < 20, 1, 0))
+# create different groups
+# for D == 1 (STR < 20)
+D1group1 <- caschool[caschool$D == 1 & caschool$el_pct < 1.9, ]
+D1group2 <- caschool[caschool$D == 1 & caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+D1group3 <- caschool[caschool$D == 1 & caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+D1group4 <- caschool[caschool$D == 1 & caschool$el_pct > 23, ]
+
+# for D == 0 (STR >= 20)
+D0group1 <- caschool[caschool$D == 0 & caschool$el_pct < 1.9, ]
+D0group2 <- caschool[caschool$D == 0 & caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+D0group3 <- caschool[caschool$D == 0 & caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+D0group4 <- caschool[caschool$D == 0 & caschool$el_pct > 23, ]
+
+# calculate the average test scores for D == 1 (STR < 20)
+AverageD1group1 <- round(mean(D1group1$testscr), digits = 2)
+AverageD1group2 <- round(mean(D1group2$testscr), digits = 2)
+AverageD1group3 <- round(mean(D1group3$testscr), digits = 2)
+AverageD1group4 <- round(mean(D1group4$testscr), digits = 2)
+
+
+# calculate the average test scores for D == 0 (STR >= 20)
+AverageD0group1 <- round(mean(D0group1$testscr), digits = 2)
+AverageD0group2 <- round(mean(D0group2$testscr), digits = 2)
+AverageD0group3 <- round(mean(D0group3$testscr), digits = 2)
+AverageD0group4 <- round(mean(D0group4$testscr), digits = 2)
+
+# calculate the counts of test scores for D == 1 (STR < 20)
+nrowD1group1 <- nrow(D1group1)
+nrowD1group2 <- nrow(D1group2)
+nrowD1group3 <- nrow(D1group3)
+nrowD1group4 <- nrow(D1group4)
+
+
+# calculate the nrows of test scores for D == 0 (STR >= 20)
+nrowD0group1 <- nrow(D0group1)
+nrowD0group2 <- nrow(D0group2)
+nrowD0group3 <- nrow(D0group3)
+nrowD0group4 <- nrow(D0group4)
+
+# Difference in test scores
+group1 <- caschool[caschool$el_pct < 1.9, ]
+group2 <- caschool[caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+group3 <- caschool[caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+group4 <- caschool[caschool$el_pct > 23, ]
+
+# regression
+group1_model <- lm(testscr ~ D, data = group1)
+group2_model <- lm(testscr ~ D, data = group2)
+group3_model <- lm(testscr ~ D, data = group3)
+group4_model <- lm(testscr ~ D, data = group4)
+
+Table <- data.frame(
+  row.names = c("< 1.9%", "1.9-8.8%", "8.8-23.0%", ">23.0%"),
+  AverageTestScore = c(AverageD1group1, AverageD1group2, AverageD1group3, AverageD1group4),
+  n = c(nrowD1group1, nrowD1group2, nrowD1group3, nrowD1group4),
+  AverageTestScore = c(AverageD0group1, AverageD0group2, AverageD0group3, AverageD0group4),
+  n = c(nrowD0group1, nrowD0group2, nrowD0group3, nrowD0group4), 
+  Difference = c(round(group1_model[[1]][2], digits = 1), 
+                 round(group2_model[[1]][2], digits = 1),
+                 round(group3_model[[1]][2], digits = 1),
+                 round(group4_model[[1]][2], digits = 1)),
+  tstatistic = c(round(summary(group1_model)$coefficients[2,3], digits = 1), 
+                 round(summary(group2_model)$coefficients[2,3], digits = 1),
+                 round(summary(group3_model)$coefficients[2,3], digits = 1),
+                 round(summary(group4_model)$coefficients[2,3], digits = 1)),
+  check.names = FALSE
+)
+
+Table1 <- kableExtra::kable(Table, "html")
+Table2 <-kableExtra::add_header_above(Table1, c("", "D=1\n Smaller Class" = 2, 
+                    "D=0 \n Larger Class" = 2, "Difference in\n test scores" = 2))
+kableExtra::kable_styling(Table2, bootstrap_options = c("striped"))
+```
+
+
+## {.smaller}
+
+```{r}
+# data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# create D and append
+caschool$D <- as.factor(ifelse(caschool$str < 20, 1, 0))
+
+# check the dataset
+head(caschool$D, 10)
+
+```
+
+
+## {.smaller}
+
+Code
+```{r}
+# create different groups
+# for D == 1 (STR < 20)
+D1group1 <- caschool[caschool$D == 1 & caschool$el_pct < 1.9, ]
+D1group2 <- caschool[caschool$D == 1 & caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+D1group3 <- caschool[caschool$D == 1 & caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+D1group4 <- caschool[caschool$D == 1 & caschool$el_pct > 23, ]
+
+# for D == 0 (STR >= 20)
+D0group1 <- caschool[caschool$D == 0 & caschool$el_pct < 1.9, ]
+D0group2 <- caschool[caschool$D == 0 & caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+D0group3 <- caschool[caschool$D == 0 & caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+D0group4 <- caschool[caschool$D == 0 & caschool$el_pct > 23, ]
+
+# calculate the average test scores for D == 1 (STR < 20)
+AverageD1group1 <- round(mean(D1group1$testscr), digits = 2)
+AverageD1group2 <- round(mean(D1group2$testscr), digits = 2)
+AverageD1group3 <- round(mean(D1group3$testscr), digits = 2)
+AverageD1group4 <- round(mean(D1group4$testscr), digits = 2)
+
+
+# calculate the average test scores for D == 0 (STR >= 20)
+AverageD0group1 <- round(mean(D0group1$testscr), digits = 2)
+AverageD0group2 <- round(mean(D0group2$testscr), digits = 2)
+AverageD0group3 <- round(mean(D0group3$testscr), digits = 2)
+AverageD0group4 <- round(mean(D0group4$testscr), digits = 2)
+```
+
+## {.smaller}
+
+```{r}
+# ...contd
+# calculate the counts of test scores for D == 1 (STR < 20)
+nrowD1group1 <- nrow(D1group1)
+nrowD1group2 <- nrow(D1group2)
+nrowD1group3 <- nrow(D1group3)
+nrowD1group4 <- nrow(D1group4)
+
+
+# calculate the nrows of test scores for D == 0 (STR >= 20)
+nrowD0group1 <- nrow(D0group1)
+nrowD0group2 <- nrow(D0group2)
+nrowD0group3 <- nrow(D0group3)
+nrowD0group4 <- nrow(D0group4)
+
+# Difference in test scores
+group1 <- caschool[caschool$el_pct < 1.9, ]
+group2 <- caschool[caschool$el_pct >= 1.9 & caschool$el_pct < 8.8, ]
+group3 <- caschool[caschool$el_pct >= 8.8 & caschool$el_pct <= 23, ]
+group4 <- caschool[caschool$el_pct > 23, ]
+
+# regression
+group1_model <- lm(testscr ~ D, data = group1)
+group2_model <- lm(testscr ~ D, data = group2)
+group3_model <- lm(testscr ~ D, data = group3)
+group4_model <- lm(testscr ~ D, data = group4)
+```
+
+## {.smaller}
+
+```{r}
+# ...contd
+# data frame
+
+Table <- data.frame(
+  row.names = c("< 1.9%", "1.9-8.8%", "8.8-23.0%", ">23.0%"),
+  AverageTestScore = c(AverageD1group1, AverageD1group2, AverageD1group3, AverageD1group4),
+  n = c(nrowD1group1, nrowD1group2, nrowD1group3, nrowD1group4),
+  AverageTestScore = c(AverageD0group1, AverageD0group2, AverageD0group3, AverageD0group4),
+  n = c(nrowD0group1, nrowD0group2, nrowD0group3, nrowD0group4), 
+  Difference = c(round(group1_model[[1]][2], digits = 1), 
+                 round(group2_model[[1]][2], digits = 1),
+                 round(group3_model[[1]][2], digits = 1),
+                 round(group4_model[[1]][2], digits = 1)),
+  tstatistic = c(round(summary(group1_model)$coefficients[2,3], digits = 1), 
+                 round(summary(group2_model)$coefficients[2,3], digits = 1),
+                 round(summary(group3_model)$coefficients[2,3], digits = 1),
+                 round(summary(group4_model)$coefficients[2,3], digits = 1)),
+  check.names = FALSE
+)
+```
+
+---
+
+```{r, warning=FALSE}
+# ...contd
+Table1 <- kableExtra::kable(Table, "html")
+Table2 <-kableExtra::add_header_above(Table1, c("", "D=1" = 2, 
+                    "D=0" = 2, "Difference in\n test scores" = 2))
+kableExtra::kable_styling(Table2, bootstrap_options = c("striped"))
+```
+
+
+---
+
+**Addressing Omitted Variable Bias by Dividing the Data into Groups**
+
+- The table can be a *matrix* or a *dataframe*.
+- Recall the `lm_dummy` model done earlier. Here, 
+  1. you need to subset `caschool` into various groups of *percentage of english learners* as specified in Table 6.1
+  2. Apply the same method as in `lm_dummy` for all the groups.
+  
+---
+
+Contd...
+
+<ol start=3>
+  <li>  You can extract the coefficients and the $t$-values from all the models with the following codes (as done earlier too). This one is an example from `lm_dummy`.
+```{r, include=FALSE}
+# data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# create D and append
+caschool$D <- as.factor(ifelse(caschool$str < 20, 1, 0))
+
+# check the dataset
+str(caschool)
+
+lm_dummy <- lm(testscr ~ D, data = caschool)
+summary(lm_dummy)
+```
+
+```{r, eval=FALSE}
+# extract intercept coefficient (beta 0) for `lm_dummy`
+coef(lm_dummy)[[1]]
+
+# extract slope coefficient (beta 1) for `lm_dummy`
+coef(lm_dummy)[[2]]
+
+# extract the t-value for `lm_dummy`
+summary(lm_dummy)[[4]][,3, drop = FALSE]
+```
+  <li>  Construct a *matrix* or a *data frame* to summarise your results in a tabular form as close as Table 6.1
+</li>
+
+# The Multiple Regression Model
+
+## {.smaller}
+
+- Our multiple regression model is
+$$
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL
+$$
+where $PctEL$ is the percentage of students in the district who are English learners.
+```{r}
+# data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# summary stats for the three variables
+summary(caschool[c("testscr", "str", "el_pct")])
+```
+
+## {.smaller}
+
+**Estimated model**
+
+```{r}
+lm_multi <- lm(testscr ~ str + el_pct, data = caschool)
+summary(lm_multi)
+```
+
+## {.smaller}
+
+**Compare the coefficients in `lm_model1` and `lm_multi`.**
+```{r, include=FALSE}
+lm_model1 <- lm(formula = testscr ~ str, data = caschool)
+```
+
+```{r}
+lm_model1
+lm_multi
+```
+
+
+---
+
+**Observations:**
+
+- In `lm_model1`, a unit decrease in the $STR$ is estimated to increase test scores by 2.28 points, but in the `lm_multi`, it is estimated to increase test scores by only 1.10 points. 
+- This difference occurs because the coefficient on $STR$ in the multiple regression is the effect of a change in $STR$, holding constant (or controlling for) $PctEL$, whereas in the single-regressor regression, $PctEL$ is not held constant.
+- These two estimates can be reconciled by concluding that there is omitted
+variable bias in the estimate in the single-regressor model `lm_model1`.
+
+# Multicollinearity
+
+---
+
+**Example #1: Fraction of English learners**
+
+Consider the following model, where we add another variable 
+$$FracEL = \frac{\text{el_pct}}{100}$$ i.e. the fraction of english learners to `lm_multi`.
+```{r}
+# define and append the variable
+caschool$FracEL <- caschool$el_pct/100
+```
+
+## {.smaller}
+
+contd...
+```{r}
+# estimate the model
+lm_multi1 <- lm(testscr ~ str + el_pct + FracEL, data = caschool)
+summary(lm_multi1)
+```
+
+---
+
+**Example #2: “Not very small” classes.**
+
+Let $NVS_i$ be a binary variable that equals 1 if the student–teacher ratio in the $i^th$ district is “not very small,” specifically, $NVS_i$ equals 1 if $STR_i \geq 12$ and equals 0 otherwise.
+
+$$
+NVS_i = \begin{cases} 
+1, \ \ \text{if  STR} \geq 12 \\ 
+0, \ \ \text{otherwise.} \\
+\end{cases}
+$$
+
+```{r}
+# define and appemd the variable
+caschool$nvs <- ifelse(caschool$str >= 12, 1, 0)
+table(caschool$nvs)
+```
+
+## {.smaller}
+
+contd...
+
+Our other covariates include `read_scr` and `computer`.
+```{r}
+# estimate the model
+lm_nvs <- lm(testscr ~ read_scr + computer + nvs, data = caschool)
+summary(lm_nvs)
+```
+
+---
+
+**Observations:**
+
+- Recall that the linear regression model with an intercept
+can equivalently be thought of as including a regressor, $X_{0i}$, that equals 1 for all i. 
+- Thus we can write $NVS_i = 1 * X_{0i}$ for all the observations in our data set; that is, $NVS_i$ can be written as a perfect linear combination of the regressors; specifically, it equals $X_{0i}$.
+- While it is possible to imagine a school district with fewer than 12 students per teacher, there are no such districts in our data set so we cannot analyze them in our regression.
+
+---
+
+**The dummy variable trap**
+
+- **Cause:** Use of multiple binary, or dummy, variables as regressors. 
+- **Example:** Partition the school districts into three categories: *rural*, *suburban*, and *urban* and create **three** binary variables.
+$$
+rural_i = \begin{cases}
+1, \ \ \text{rural district}\\
+0, \ \ \text{otherwise}
+\end{cases}
+$$
+$$
+suburban_i = \begin{cases}
+1, \ \ \text{suburban district} \\
+0,  \ \ \text{otherwise}
+\end{cases}
+$$
+$$
+urban_i = \begin{cases}
+1, \ \ \text{urban district}\\
+0, \ \ \text{otherwise}
+\end{cases}
+$$
+
+---
+
+contd...
+
+**Create and append a variable `region` to the dataset**
+```{r}
+# set seed for reproducibility
+set.seed(1234)
+
+# create the variable 'region'
+caschool$region <- as.factor(sample(c("rural", "suburban", "urban"),
+                          size = nrow(caschool), replace = TRUE))
+table(caschool$region)
+```
+
+## {.smaller}
+
+contd...
+
+**Create and append the 3 binary variables to the dataset**
+```{r}
+# create a subset of 'caschool'
+caschool_region <- caschool[, c("testscr", "computer", "read_scr","region")]
+
+# create and append the binary variables
+caschool_region$rural <- as.factor(
+  ifelse(caschool_region$region == "rural", 1, 0))
+
+caschool_region$suburban <- as.factor(
+  ifelse(caschool_region$region == "suburban", 1, 0))
+
+caschool_region$urban <- as.factor(
+  ifelse(caschool_region$region == "urban", 1, 0))
+
+# check
+str(caschool_region)
+
+```
+
+## {.smaller}
+
+contd...
+```{r}
+# estimate the regression
+summary(lm_region <- lm(testscr ~ read_scr + computer +
+                  rural + suburban + urban, data = caschool_region))
+```
+
+## {.smaller}
+
+contd...
+
+**Observations**
+
+>- To estimate the regression, you must exclude one of these four variables, either one of the binary indicators or the constant term. 
+>- By convention, the constant term is retained, in which case one of the binary indicators is excluded. 
+  - For example, if $rural_i$ were excluded, then the coefficient on $suburban_i$ would be the average difference between test scores in *suburban* and *rural* districts, holding constant the other variables in the regression.
+>- In general, if there are **G** binary variables, if each observation falls into one
+and only one category, if there is an intercept in the regression, and if all **G** binary variables are included as regressors, then the *regression will fail* because of perfect multicollinearity. This situation is called the **dummy variable trap**.
+
+## {.smaller}
+
+contd...
+
+Exclude `rural` and run the regression, or ...
+```{r}
+summary(lm_region1 <- lm(testscr ~ read_scr + computer +
+                  suburban + urban, data = caschool_region))
+```
+
+## {.smaller}
+
+contd...
+
+... R can do it automatically for you.
+```{r}
+summary(lm_region2 <- lm(testscr ~ read_scr + computer +
+                  region, data = caschool_region))
+```
+
+
+# Exercise
+
+## {.smaller}
+
+
+E6.1 Use the [birthweight_smoking](birthweight_smoking.xlsx) data set introduced in Empirical Exercise E5.3 to answer the following questions. You can read the data description [here](Birthweight_Smoking_Description.pdf){target="_blank"}
+
+(a). Regress `Birthweight` on `Smoker`. What is the estimated effect of smoking on birth weight?
+```{r, include=FALSE}
+# read the data
+birthweight_smoking <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/2-LinearRegressionWithMultipleRegressors/birthweight_smoking.xlsx')
+str(birthweight_smoking)
+
+summary(lm(birthweight ~ as.factor(smoker), data = birthweight_smoking))
+```
+
+
+(b). Regress `Birthweight` on `Smoker`, `Alcohol`, and `Nprevist`.
+```{r, include=FALSE}
+summary(m1 <- lm(birthweight ~ smoker + alcohol + nprevist, data = birthweight_smoking))
+
+```
+
+(i). Using the two conditions in Key Concept 6.1, explain why the exclusion of `Alcohol` and `Nprevist` could lead to omitted variable bias in the regression estimated in (a).
+
+(ii). Is the estimated effect of smoking on birth weight substantially different from the regression that excludes `Alcohol` and `Nprevist`? Does the regression in (a) seem to suffer from omitted variable bias?
+
+(iii). Jane smoked during her pregnancy, did not drink alcohol, and had 8 prenatal care visits. Use the regression to predict the birth weight of Jane’s child.
+```{r, include=FALSE}
+# new values
+new <- data.frame(smoker = 1, alcohol = 0, nprevist = 8)
+
+p1 <- predict(m1, new)
+names(p1) <- "Predicted Birth weight of Jane's Child"; p1
+```
+
+
+## {.smaller}
+
+E6.2 Using the data set [Growth](Growth.xlsx) described in Empirical Exercise E4.1, but excluding the data for Malta, carry out the following exercises.
+
+(a). Construct a table that shows the sample mean, standard deviation, and minimum and maximum values for the series `Growth`, `TradeShare`, `YearsSchool`, `Oil`, `Rev_Coups`, `Assassinations`, and `RGDP60`. Include the appropriate units for all entries.
+
+(b). Run a regression of `Growth` on `TradeShare`, `YearsSchool`, `Rev_Coups`, `Assassinations`, and `RGDP60`. What is the value of the coefficient on `Rev_Coups`? Interpret the value of this coefficient. Is it large or small in a real-world sense?
+
+(c). Use the regression to predict the average annual growth rate for a country that has average values for all regressors.
+
+(d). Repeat (c) but now assume that the country’s value for `TradeShare` is one standard deviation above the mean.
+
+(e). Why is `Oil` omitted from the regression? What would happen if it were included?
