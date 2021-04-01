@@ -1,10 +1,70 @@
----
-title: "3: Hypothesis tests and confidence intervals"
-author: "pravesh"
-date: "2021-03-29"
-output: html_document
----
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="generator" content="Hugo 0.74.3" />
 
+
+<title>3: Hypothesis tests and confidence intervals 1 - ECON0891</title>
+<meta property="og:title" content="3: Hypothesis tests and confidence intervals 1 - ECON0891">
+
+
+  <link href='/favicona.ico' rel='icon' type='image/x-icon'/>
+
+
+
+  
+
+
+
+
+
+
+
+
+<link href='//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/styles/github.min.css' rel='stylesheet' type='text/css' />
+
+
+
+<link rel="stylesheet" href="/css/fonts.css" media="all">
+<link rel="stylesheet" href="/css/main.css" media="all">
+
+
+
+  </head>
+  <body>
+    <div class="wrapper">
+      <header class="header">
+        <nav class="nav">
+  <a href="/" class="nav-logo">
+    <img src="/images/pt.png"
+         width="50"
+         height="50"
+         alt="Logo">
+  </a>
+
+  <ul class="nav-links">
+    
+    <li><a href="/announcement/">Announcement</a></li>
+    
+  </ul>
+</nav>
+
+      </header>
+
+
+<main class="content" role="main">
+
+  <article class="article">
+    
+
+    <h1 class="article-title">3: Hypothesis tests and confidence intervals 1</h1>
+
+    
+
+    <div class="article-content">
+      
 
 
 <div id="contents" class="section level1">
@@ -32,7 +92,7 @@ summary(lm_model1)$coefficients</code></pre>
 <p><strong>Interpretation:</strong> ??</p>
 <hr />
 <p><strong>Graphical inspection of p-value</strong>
-<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals1_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>The p-Value is the area under the curve to left of −4.75 plus the area under the curve to the right of 4.75. As we already seen from the summary of the model, this value is very small.</p>
 <hr />
 <p><strong>Graphical inspection of p-value (code)</strong></p>
@@ -129,7 +189,7 @@ str(caschool)</code></pre>
 <pre class="r"><code>plot(testscr ~ D, data = caschool, main = &quot;Dummy Regression&quot;)
 legend(&quot;topleft&quot;, legend = c(&quot;: STR &lt; 20&quot;, expression(paste(&quot;: &quot;,STR &gt;= 20))),
        pch = c(&quot;1&quot;, &quot;0&quot;), cex = 0.7)</code></pre>
-<p><img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals1_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
 </div>
 <div id="section-4" class="section level2 smaller">
 <h2></h2>
@@ -173,12 +233,13 @@ summary(lm_dummy)</code></pre>
 </div>
 <div id="three-four" class="section level1">
 <h1>3.4 Heteroskedasticity and Homoskedasticity</h1>
+<p>We use the Current Population Survey (CPS) data from the US Bureau of Labor Statistics for this exercise. Download the <a href="ch5_cps_box.xlsx">data</a> and the <a href="Ch5_cps_box.docx" target=".blank">description</a> files before you start the analysis.</p>
 <div id="section-6" class="section level2 smaller">
 <h2></h2>
 <p><strong>Figure 5.3</strong></p>
 Scatterplot of Hourly earnings and Years of education for 29- to 30-Year-Olds in the United States in 2012.
 <div class="figure"><span id="fig:unnamed-chunk-11"></span>
-<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-11-1.png" alt="The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic." width="672" />
+<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals1_files/figure-html/unnamed-chunk-11-1.png" alt="The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic." width="672" />
 <p class="caption">
 Figure 1: The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic.
 </p>
@@ -190,7 +251,7 @@ A_Age:  Age
 AHE:        Average Hourly Earnings in 2004
 YRSEDUC:     Years of Education</code></pre>
 <pre class="r"><code># read the data
-cps &lt;- readxl::read_xlsx(&quot;C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx&quot;)
+cps &lt;- readxl::read_xlsx(&quot;C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals1/ch5_cps_box.xlsx&quot;)
 
 summary(cps)</code></pre>
 <pre><code>##      a_age           a_sex            ahe             yrseduc     
@@ -303,3 +364,47 @@ coeftest(lm_earning, vcov. = vcov)</code></pre>
 <p>(d). Do you think smoking is uncorrelated with other factors that cause low birth weight? That is, do you think that the regression error term, say <span class="math inline">\(u_i\)</span>, has a conditional mean of zero, given Smoking (<span class="math inline">\(X_i\)</span>)? (You will investigate this further in <strong>Birthweight and Smoking</strong> exercises in later chapters.)</p>
 </div>
 </div>
+
+    </div>
+  </article>
+
+  
+
+
+</main>
+
+      <footer class="footer">
+        <ul class="footer-links">
+          <li>
+            <a href="/index.xml" type="application/rss+xml" target="_blank">RSS feed</a>
+          </li>
+          <li>
+            <a href="https://gohugo.io/" class="footer-links-kudos">Made with <img src="/images/hugo-logo.png" alt="Img link to Hugo website" width="22" height="22"></a>
+          </li>
+        </ul>
+      </footer>
+
+    </div>
+    
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/highlight.min.js"></script>
+
+
+
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/r.min.js"></script>
+<script src="//cdnjs.cloudflare.com/ajax/libs/highlight.js/9.12.0/languages/yaml.min.js"></script>
+<script>hljs.configure({languages: []}); hljs.initHighlightingOnLoad();</script>
+
+
+
+    
+<script src="/js/math-code.js"></script>
+<script async src="//cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js?config=TeX-MML-AM_CHTML"></script>
+
+
+    
+  </body>
+</html>
+

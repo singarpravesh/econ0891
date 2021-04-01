@@ -1,5 +1,5 @@
 ---
-title: "3: Hypothesis tests and confidence intervals"
+title: "3: Hypothesis tests and confidence intervals 1"
 author: "pravesh"
 date: "2021-03-29"
 output: html_document
@@ -159,6 +159,7 @@ One can see that the expected test score in districts with STR<20 ($D_i=1$) is p
 - Calculate the confidence intervals for coefficients in the dummy regression model at 5% significance level and comment. 
 
 # 3.4 Heteroskedasticity and Homoskedasticity {#three-four}
+We use the Current Population Survey (CPS) data from the US Bureau of Labor Statistics for this exercise. Download the [data](ch5_cps_box.xlsx) and the [description](Ch5_cps_box.docx){target=".blank"} files before you start the analysis.
 
 ## {.smaller}
 
@@ -166,7 +167,7 @@ One can see that the expected test score in districts with STR<20 ($D_i=1$) is p
 
 Scatterplot of Hourly earnings and Years of education for 29- to 30-Year-Olds in the United States in 2012.
 ```{r, echo=FALSE, fig.cap="The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic."}
-cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx")
+cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals1/ch5_cps_box.xlsx")
 lm_earning <- lm(ahe ~ yrseduc, data = cps)
 plot(ahe ~ yrseduc, data = cps, xlab = "Years of Education",
      ylab = "Average Hourly Earnings",
@@ -193,7 +194,7 @@ YRSEDUC:     Years of Education
 
 ```{r}
 # read the data
-cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx")
+cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals1/ch5_cps_box.xlsx")
 
 summary(cps)
 ```
@@ -273,7 +274,6 @@ We see that the values reported in the column *Std. Error* are equal those from 
 ---
 
 # 3.5 Exercise {#three-five}
-
 
 
 E5.1 Use the data set [Earnings_and_Height](Earnings_and_Height.xlsx) described in Empirical Exercise 4.2 to carry out the following exercises.
