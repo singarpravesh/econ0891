@@ -1,0 +1,476 @@
+---
+title: "4: Hypothesis tests and confidence intervals 2"
+author: "pravesh"
+date: "2021-03-28"
+output: html_document
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<div id="contents" class="section level1">
+<h1>Contents</h1>
+<p><a href="#four-one">4.1 Hypothesis Tests and Confidence Intervals for a Single Coefficient</a><br>
+<a href="#four-two">4.2 Tests of Joint Hypotheses</a><br>
+<a href="#four-three">4.3 Model Specification for Multiple Regression</a><br>
+<a href="#four-four">4.4 Analysis of the <code>testscr</code> data set</a><br>
+<a href="#four-five">4.5 Exercise</a></p>
+</div>
+<div id="four-one" class="section level1">
+<h1>4.1 Hypothesis Tests and Confidence Intervals for a Single Coefficient</h1>
+<p><strong>Introduction</strong></p>
+<ul>
+<li>Like all estimators, the OLS estimator has sampling uncertainty because its value differs from one sample to the next.</li>
+</ul>
+<blockquote>
+<ul>
+<li>This chapter presents methods for quantifying the sampling uncertainty of the OLS estimator through the use of standard errors, statistical hypothesis tests, and confidence intervals.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>One new possibility that arises in multiple regression is a hypothesis that simultaneously involves two or more regression coefficients.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>The general approach to testing such “joint” hypotheses involves a new test statistic, the F-statistic.</li>
+</ul>
+</blockquote>
+<hr />
+<p><strong>Hypothesis Tests for a Single Coefficient</strong></p>
+<ul>
+<li>We have done this in Chapter 5. Refer <code>lm_model1</code> for details.</li>
+<li>However, a short recap shall be helpful:
+<ul>
+<li><strong>Step 1:</strong> Fit a linear model and get the summary of the model or extract the coefficients from the summary of the model.</li>
+<li><strong>Step 2:</strong> Reject the hypothesis at the 5% significance level if the <span class="math inline">\(p\)</span>-value is less than 0.05 or, equivalently, if <span class="math inline">\(\mid{t^{act}\mid}&gt;1.96\)</span>.</li>
+</ul></li>
+</ul>
+<div id="section" class="section level2 build">
+<h2></h2>
+<p>Q1: Can we reject the null hypothesis that a change in the <u>student–teacher ratio</u> has no effect on <u>test scores</u>, once we control for the <u>percentage of English learners</u> in the district?</p>
+<p>Q2: What is a <u>95% confidence interval</u> for the effect on <u>test scores</u> of a change in the <u>student–teacher ratio</u>, controlling for the <u>percentage of English learners</u>?</p>
+<p>Our multiple regression model is
+<span class="math display">\[
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL
+\]</span></p>
+<p>where <span class="math inline">\(PctEL\)</span> is the percentage of students in the district who are English learners.</p>
+<p><u>Now, get the <code>summary</code> of <code>lm_multi</code> that we have done earlier in Chapter 6.</u></p>
+</div>
+<div id="section-1" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># testing the null beta = 0 for `str`.
+summary(lm_multi)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str + el_pct, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -48.845 -10.240  -0.308   9.815  43.461 
+## 
+## Coefficients:
+##              Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 686.03225    7.41131  92.566  &lt; 2e-16 ***
+## str          -1.10130    0.38028  -2.896  0.00398 ** 
+## el_pct       -0.64978    0.03934 -16.516  &lt; 2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 14.46 on 417 degrees of freedom
+## Multiple R-squared:  0.4264, Adjusted R-squared:  0.4237 
+## F-statistic:   155 on 2 and 417 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p>Because the p-value is less than 5%, the null hypothesis can be rejected at the 5% significance level (but not quite at the 1% significance level)</p>
+<hr />
+<p><strong>95% confidence intervals</strong></p>
+<pre class="r"><code> (c &lt;- round(confint(lm_multi, level = 0.95), 2))</code></pre>
+<pre><code>##              2.5 % 97.5 %
+## (Intercept) 671.46 700.60
+## str          -1.85  -0.35
+## el_pct       -0.73  -0.57</code></pre>
+<ul>
+<li>We can be 95% confident that the true value of the coefficient of STR is between -1.85 and -0.35.</li>
+<li><strong>Implication:</strong> Reducing class size will improve test scores.</li>
+</ul>
+<hr />
+<blockquote>
+<ul>
+<li>Your analysis of the <code>lm_multi</code> model has persuaded the superintendent that, based on the evidence so far, reducing class size will improve test scores in her district.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>Now, however, she moves on to a more nuanced question. If she is to hire more teachers, she can pay for those teachers either through cuts elsewhere in the budget (no new computers, reduced maintenance, and so on) or by asking for an increase in her budget, which taxpayers do not favor.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>What, she asks, is <u>the effect on test scores of reducing the student–teacher ratio</u> (i.e. reducing class size), holding expenditures per pupil (and the percentage of English learners) constant?</li>
+</ul>
+</blockquote>
+<hr />
+<ul>
+<li>Our multiple regression model is
+<span class="math display">\[
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL + \beta_3Expn
+\]</span></li>
+</ul>
+<p>where, <span class="math inline">\(Expn\)</span> is the <em>expenditures per student</em>.</p>
+<ul>
+<li>We now need to <code>update()</code> our <code>lm_multi</code> model by adding <code>expn_stu</code>.</li>
+</ul>
+<pre class="r"><code>lm_multi_expn &lt;- update(lm_multi, . ~ . + expn_stu) 
+summary(lm_multi_expn)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ str + el_pct + expn_stu, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -51.340 -10.111   0.293  10.318  43.181 
+## 
+## Coefficients:
+##               Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept) 649.577947  15.205719  42.719  &lt; 2e-16 ***
+## str          -0.286399   0.480523  -0.596  0.55149    
+## el_pct       -0.656023   0.039106 -16.776  &lt; 2e-16 ***
+## expn_stu      0.003868   0.001412   2.739  0.00643 ** 
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 14.35 on 416 degrees of freedom
+## Multiple R-squared:  0.4366, Adjusted R-squared:  0.4325 
+## F-statistic: 107.5 on 3 and 416 DF,  p-value: &lt; 2.2e-16</code></pre>
+<ul>
+<li><p>Because the p-value is <u>greater</u> than 5%, the null hypothesis <u>cannot</u> be rejected at the 5% significance level (or even at the 10% significance level).</p></li>
+<li><p>Therefore, there is no evidence that hiring more teachers improves test scores if overall expenditures per pupil are held constant.</p></li>
+</ul>
+<hr />
+<p><strong>A case for imperfect multicollinearity</strong></p>
+<p>Note that the standard error on <code>str</code> increased when <code>expn_stu</code> was added:</p>
+<pre class="r"><code>library(tidyverse)
+library(kableExtra)
+data.frame(
+  Model = c(&quot;lm_multi&quot;, &quot;lm_multi_expn&quot;),
+  StandardError = c(summary(lm_multi)$coefficients[2,2], 
+                       summary(lm_multi_expn)$coefficients[2,2])  
+) %&gt;% kable() %&gt;% kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;), full_width = FALSE,
+                                position = &quot;center&quot;, font_size = 18)</code></pre>
+<table class="table table-striped table-hover" style="font-size: 18px; width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Model
+</th>
+<th style="text-align:right;">
+StandardError
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+lm_multi
+</td>
+<td style="text-align:right;">
+0.3802783
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+lm_multi_expn
+</td>
+<td style="text-align:right;">
+0.4805232
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="four-two" class="section level1">
+<h1>4.2 Tests of Joint Hypotheses</h1>
+<p><strong>Joint null hypotheses</strong></p>
+<ul>
+<li>Consider the model
+<span class="math display">\[
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL + \beta_3Expn
+\]</span></li>
+<li><strong>Joint Hypotheses:</strong> Neither the student-teacher ratio <span class="math inline">\(STR\)</span>, nor expenditure per pupil <span class="math inline">\(Expn\)</span> have an effect on test scores, controlling for the percentage of English learners <span class="math inline">\(PctEL\)</span>.
+<span class="math display">\[
+H_0:\beta_1 =0 \text{ and }\beta_2 = 0\\
+H_1: \beta_1\neq0 \text{ and/or }\beta_2\neq0.
+\]</span></li>
+<li>If any <strong><em>one (or more than one)</em></strong> of <span class="math inline">\(H_0\)</span> if false, then the joint null hypothesis is itself false.</li>
+</ul>
+<div id="section-2" class="section level2 smaller">
+<h2></h2>
+<p><strong>The <em>F</em>-Statistic</strong></p>
+<ul>
+<li>The <em>F</em>-Statistic is used to test the joint hypotheses about regression coefficients.</li>
+<li>Package required: <code>car</code></li>
+<li>Function: <code>linearHypothesis()</code></li>
+</ul>
+<p>The homoskedasticity-only <em>F</em>-Statistic is given by:
+<span class="math display">\[
+F = \frac{(SSR_{restricted}-SSR_{unrestricted})/q}{SSR_{unrestricted}/(n-k-1)}\\
+\]</span>
+where;<span class="math inline">\(SSR_{restricted}\)</span> is the sum of squared residuals from the restricted model</p>
+<p><span class="math inline">\(SSR_{unrestricted}\)</span> is the sum of squared residuals from the full model</p>
+<p><span class="math inline">\(q\)</span> is the number of restrictions under the null</p>
+<p>and, <span class="math inline">\(k\)</span> is the number of regressors in the unrestricted regression</p>
+</div>
+<div id="section-3" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li>Our regression model is <code>lm_multi_expn</code> that we estimated earlier.</li>
+<li>We now conduct the <em>F</em>-test using <code>linearHypothesis()</code>.</li>
+</ul>
+<pre class="r"><code>library(car)
+(l &lt;- linearHypothesis(model = lm_multi_expn, 
+        hypothesis.matrix = c(&quot;str = 0&quot;, &quot;expn_stu = 0&quot;)))</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## str = 0
+## expn_stu = 0
+## 
+## Model 1: restricted model
+## Model 2: testscr ~ str + el_pct + expn_stu
+## 
+##   Res.Df   RSS Df Sum of Sq      F   Pr(&gt;F)    
+## 1    418 89000                                 
+## 2    416 85700  2    3300.3 8.0101 0.000386 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>The output shows that the value of <em>F</em>-statistic is 8.01 and the corresponding <em>p</em>-value is 0.000386. Thus we can <strong>reject the null hypotheses</strong> that both coefficients are zero at 95% confidence level.</p>
+</div>
+<div id="section-4" class="section level2 smaller">
+<h2></h2>
+<p>The heteroskedasticity-robust version of <em>F</em>-test;</p>
+<pre class="r"><code>(lr &lt;- linearHypothesis(model = lm_multi_expn, 
+                       hypothesis.matrix = c(&quot;str = 0&quot;, &quot;expn_stu = 0&quot;),
+                       white.adjust = &quot;hc1&quot;))</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## str = 0
+## expn_stu = 0
+## 
+## Model 1: restricted model
+## Model 2: testscr ~ str + el_pct + expn_stu
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df      F   Pr(&gt;F)   
+## 1    418                      
+## 2    416  2 5.4337 0.004682 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+<div id="confidence-sets-for-multiple-coefficients" class="section level2">
+<h2>Confidence sets for multiple coefficients</h2>
+<ul>
+<li>Confidence sets consist of combinations of coefficients that contain the true combination of coefficients.</li>
+<li>Put differently, a confidence set is the set of all coefficient combinations for which we cannot reject the corresponding joint null hypothesis tested using an <em>F</em>-test.</li>
+<li>A 95% confidence set for two or more coefficients is a set that contains the true population values of these coefficients in 95% of randomly drawn samples.</li>
+</ul>
+</div>
+<div id="section-5" class="section level2 smaller">
+<h2></h2>
+<p><strong>95% Confidence Set for Coefficients on <code>str</code> and <code>expn_stu</code></strong></p>
+<pre class="r"><code>confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c(&quot;str&quot;, &quot;expn_stu&quot;), ylim = c(0,0.0075),
+                  main = &quot;95% confidence set&quot;)</code></pre>
+<p><img src="/econ0891/4-HypothesisTestsAndConfidenceIntervals2_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="section-6" class="section level2 smaller">
+<h2></h2>
+<p><strong>Robust 95% Confidence Set for Coefficients on <code>str</code> and <code>expn_stu</code></strong></p>
+<pre class="r"><code># draw the robust 95% confidence set
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c(&quot;str&quot;, &quot;expn_stu&quot;),
+                  ylim = c(-0.001, 0.008),
+                  vcov. = sandwich::vcovHC(lm_multi_expn, type = &quot;HC1&quot;),
+                  col = &quot;red&quot;)
+
+# draw the homoscedasticity-only 95% confidence set
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c(&quot;str&quot;, &quot;expn_stu&quot;),
+                  ylim = c(-0.001, 0.008), 
+                  add = TRUE)</code></pre>
+<p><img src="/econ0891/4-HypothesisTestsAndConfidenceIntervals2_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>The robust standard errors are slightly larger than those under homoskedasticity-only case, thus the robust confidence set is slightly larger.</p>
+</div>
+<div id="section-7" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li>The confidence ellipse is a fat sausage with the long part of the sausage oriented in the lower-left/upper-right direction.</li>
+<li>The reason for this orientation is that the estimated correlation between <span class="math inline">\(\beta_1\)</span> and <span class="math inline">\(\beta_3\)</span> is positive, which in turn arises because the correlation between the regressors <code>str</code> and <code>expn_stu</code> is negative (schools that spend more per pupil tend to have fewer students per teacher).</li>
+<li>You can see, below, that the 95% confidence set for coefficients of <code>el_pct</code> and <code>str</code> is negative.
+<img src="/econ0891/4-HypothesisTestsAndConfidenceIntervals2_files/figure-html/unnamed-chunk-11-1.png" width="672" /></li>
+</ul>
+</div>
+</div>
+<div id="four-three" class="section level1">
+<h1>4.3 Model Specification for Multiple Regression</h1>
+<p><strong>Omitted Variable Bias in Multiple Regression</strong></p>
+<blockquote>
+<ul>
+<li>Omitted variable bias is the bias in the OLS estimator that arises when one or more included regressors are correlated with an omitted variable.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>For omitted variable bias to arise, two things must be true:</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>At least one of the included regressors must be correlated with the omitted variable.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>The omitted variable must be a determinant of the dependent variable, Y.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>In our model <span class="math inline">\(\hat{testscr}=\beta_0 + \beta_1\text{str} + \beta_2\text{el_pct}\)</span>, we are looking for a causal effect of class size <code>el_pct</code> on test score <code>str</code>.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>There could be a bias due to omitting <code>outside learning opportunities</code>.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li>For <code>outside learning opportunities</code> is a complicated concept to measure, we can consider the variable <code>meal_pct</code>.</li>
+</ul>
+</blockquote>
+<blockquote>
+<ul>
+<li><code>meal_pct</code> is the percentage of students that qualify for a free or subsidised lunch due to family incomes below a certain threshold.</li>
+</ul>
+</blockquote>
+<div id="section-8" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># estimate the heteroskedasticity-robust model
+lm_control_model &lt;- lm(testscr ~ str + el_pct + 
+                        meal_pct, data = caschool)
+lmtest::coeftest(lm_control_model, 
+      vcov. = sandwich::vcovHC(lm_control_model,type = &quot;HC1&quot;))</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##               Estimate Std. Error  t value              Pr(&gt;|t|)    
+## (Intercept) 700.149965   5.568450 125.7352 &lt; 0.00000000000000022 ***
+## str          -0.998309   0.270080  -3.6963             0.0002480 ***
+## el_pct       -0.121573   0.032832  -3.7029             0.0002418 ***
+## meal_pct     -0.547346   0.024107 -22.7046 &lt; 0.00000000000000022 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We observe no substantial changes in the conclusion about the effect of size on <code>testscr</code>: the coefficient on <code>str</code> changes by only 0.1 and retains its significance.</p>
+</div>
+</div>
+<div id="four-four" class="section level1">
+<h1>4.4 Analysis of the <code>testscr</code> data set</h1>
+<p>We shall consider the following models and graphically inspect the correlation and summarise all the regression results in a table.
+<span class="math display">\[
+\begin{align*}
+\text{(I)  }\text{testscr} &amp;= \beta_0 + \beta_1\text{str} + u\\
+\text{(II)  }\text{testscr} &amp;= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + u\\
+\text{(III)  }\text{testscr} &amp;= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{meal_pct} + u\\
+\text{(IV)  }\text{testscr} &amp;= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{calw_pct} + u\\
+\text{(V)  }\text{testscr} &amp;= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{meal_pct} + \beta_4\text{calw_pct} + u\\
+\end{align*}
+\]</span></p>
+<p>where, <code>testscr</code>- test score
+<code>str</code> - student-teacher ratio
+<code>el_pct</code> - percentage of english learners
+<code>meal_pct</code> - percentage of students that qualify for a free or subsidised lunch due to family incomes below a certain threshold.
+<code>calw_pct</code> - percentage of students qualifying for reduced-price lunch.</p>
+<div id="section-9" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># models
+I &lt;- lm(testscr ~ str, data = caschool)
+II &lt;- lm(testscr ~ str + el_pct, data = caschool)
+III &lt;- lm(testscr ~ str + el_pct + meal_pct, data = caschool)
+IV &lt;- lm(testscr ~ str + el_pct + calw_pct, data = caschool)
+V &lt;- lm(testscr ~ str + el_pct + meal_pct + calw_pct, data = caschool)
+
+# gather all the robust standard error values in a list
+robust_se &lt;- list(
+  sqrt(diag(sandwich::vcovHC(I, type = &quot;HC1&quot;))),
+  sqrt(diag(sandwich::vcovHC(II, type = &quot;HC1&quot;))),
+  sqrt(diag(sandwich::vcovHC(III, type = &quot;HC1&quot;))),
+  sqrt(diag(sandwich::vcovHC(IV, type = &quot;HC1&quot;))),
+  sqrt(diag(sandwich::vcovHC(V, type = &quot;HC1&quot;)))
+)
+
+## use the `stargazer()` function to represent the output in a tabular form
+stargazer::stargazer(I, II, III, IV, V, type = &quot;text&quot;, 
+                     title = &quot;Analysis of testscore dataset.&quot;,
+                     se = robust_se, digits = 3, 
+                     column.labels = c(&quot;I&quot;, &quot;II&quot;, &quot;III&quot;, &quot;IV&quot;, &quot;V&quot;),
+                     column.sep.width = &quot;1pt&quot;,
+                     out = &quot;testscre models.txt&quot;,
+                     notes = &quot;Heteroskedasticity robust standard errors are given in parentheses under coefficients.&quot;, 
+                     notes.append = TRUE) </code></pre>
+<pre><code>## 
+## Analysis of testscore dataset.
+## ===============================================================================================================================================
+##                                                                         Dependent variable:                                                    
+##                     ---------------------------------------------------------------------------------------------------------------------------
+##                                                                               testscr                                                          
+##                                I                       II                      III                       IV                       V            
+##                               (1)                     (2)                      (3)                      (4)                      (5)           
+## -----------------------------------------------------------------------------------------------------------------------------------------------
+## str                        -2.280***                -1.101**                -0.998***                -1.308***                -1.014***        
+##                             (0.519)                 (0.433)                  (0.270)                  (0.339)                  (0.269)         
+##                                                                                                                                                
+## el_pct                                             -0.650***                -0.122***                -0.488***                -0.130***        
+##                                                     (0.031)                  (0.033)                  (0.030)                  (0.036)         
+##                                                                                                                                                
+## meal_pct                                                                    -0.547***                                         -0.529***        
+##                                                                              (0.024)                                           (0.038)         
+##                                                                                                                                                
+## calw_pct                                                                                             -0.790***                  -0.048         
+##                                                                                                       (0.068)                  (0.059)         
+##                                                                                                                                                
+## Constant                  698.933***               686.032***               700.150***               697.999***               700.392***       
+##                            (10.364)                 (8.728)                  (5.568)                  (6.920)                  (5.537)         
+##                                                                                                                                                
+## -----------------------------------------------------------------------------------------------------------------------------------------------
+## Observations                  420                     420                      420                      420                      420           
+## R2                           0.051                   0.426                    0.775                    0.629                    0.775          
+## Adjusted R2                  0.049                   0.424                    0.773                    0.626                    0.773          
+## Residual Std. Error    18.581 (df = 418)       14.464 (df = 417)         9.080 (df = 416)        11.654 (df = 416)         9.084 (df = 415)    
+## F Statistic         22.575*** (df = 1; 418) 155.014*** (df = 2; 417) 476.306*** (df = 3; 416) 234.638*** (df = 3; 416) 357.054*** (df = 4; 415)
+## ===============================================================================================================================================
+## Note:                                                                                                               *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01
+##                                                          Heteroskedasticity robust standard errors are given in parentheses under coefficients.</code></pre>
+</div>
+</div>
+<div id="four-five" class="section level1">
+<h1>4.5 Exercises</h1>
+<p>7.1 Use the<a href="birthweight_smoking.xlsx">Birthweight_Smoking</a> data set introduced in Empirical Exercise E5.3 to answer the following questions. To begin, run three regressions:</p>
+<p>1 Birthweight on Smoker</p>
+<p>2 Birthweight on Smoker, Alcohol, and Nprevist</p>
+<p>3 Birthweight on Smoker, Alcohol, Nprevist, and Unmarried</p>
+<p>a What is the value of the estimated effect of smoking on birth weight in each of the regressions?</p>
+<p>b Construct a 95% confidence interval for the effect of smoking on birth weight, using each of the regressions.</p>
+<p>c Does the coefficient on Smoker in regression (1) suffer from omitted variable bias? Explain.</p>
+<p>d Does the coefficient on Smoker in regression (2) suffer from omitted variable bias? Explain.</p>
+<p>e Consider the coefficient on Unmarried in regression (3).</p>
+<p>i Construct a 95% confidence interval for the coefficient.</p>
+<p>ii Is the coefficient statistically significant? Explain.</p>
+<p>iii Is the magnitude of the coefficient large? Explain.</p>
+<p>iv A family advocacy group notes that the large coefficient suggests that public policies that encourage marriage will lead, on average, to healthier babies. Do you agree? (Hint: Review the discussion of control variables in Section 7.5. Discuss some of the various factors that Unmarried may be controlling for and how this affects the interpretation of its coefficient.)</p>
+<p>f Consider the various other control variables in the data set. Which do you think should be included in the regression? Using a table like Table 7.1, examine the robustness of the confidence interval you constructed in (b). What is a reasonable 95% confidence interval for the effect of smoking on birth weight?</p>
+<p><strong>In addition, also solve exercise E7.2 in the book given in pages 296 and 297.</strong></p>
+</div>

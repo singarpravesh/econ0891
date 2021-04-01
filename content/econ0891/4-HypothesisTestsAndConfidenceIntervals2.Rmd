@@ -1,0 +1,353 @@
+---
+title: "4: Hypothesis tests and confidence intervals 2"
+author: "pravesh"
+date: "2021-03-28"
+output: html_document
+---
+
+# Contents
+[4.1 Hypothesis Tests and Confidence Intervals for a Single Coefficient](#four-one)<br>
+[4.2 Tests of Joint Hypotheses](#four-two)<br>
+[4.3 Model Specification for Multiple Regression](#four-three)<br>
+[4.4 Analysis of the `testscr` data set](#four-four)<br>
+[4.5 Exercise](#four-five)
+
+
+# 4.1 Hypothesis Tests and Confidence Intervals for a Single Coefficient {#four-one}
+
+**Introduction**
+
+- Like all estimators, the OLS estimator has sampling uncertainty because its value differs from one sample to the next.
+
+>- This chapter presents methods for quantifying the sampling uncertainty of the OLS estimator through the use of standard errors, statistical hypothesis tests, and confidence intervals. 
+
+>- One new possibility that arises in multiple regression is a hypothesis that simultaneously involves two or more regression coefficients. 
+
+>- The general approach to testing such “joint” hypotheses involves a new test statistic, the F-statistic.
+
+---
+
+**Hypothesis Tests for a Single Coefficient**
+
+- We have done this in Chapter 5. Refer `lm_model1` for details.
+- However, a short recap shall be helpful:
+  * **Step 1:** Fit a linear model and get the summary of the model or extract the coefficients from the summary of the model.
+  * **Step 2:** Reject the hypothesis at the 5% significance level if the $p$-value is less than 0.05 or, equivalently, if $\mid{t^{act}\mid}>1.96$.
+
+## {.build}
+
+Q1: Can we reject the null hypothesis that a change in the <u>student–teacher ratio</u> has no effect on <u>test scores</u>, once we control for the <u>percentage of English learners</u> in the district? 
+
+Q2: What is a <u>95% confidence interval</u> for the effect on <u>test scores</u> of a change in the <u>student–teacher ratio</u>, controlling for the <u>percentage of English learners</u>?
+
+Our multiple regression model is
+$$
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL
+$$
+
+where $PctEL$ is the percentage of students in the district who are English learners.
+
+<u>Now, get the `summary` of `lm_multi` that we have done earlier in Chapter 6.</u>
+
+## {.smaller}
+
+```{r, include=FALSE}
+suppressMessages(library("tibble"))
+# read the data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# fit the multi model
+lm_multi <- lm(testscr ~ str + el_pct, data = caschool)
+```
+
+```{r}
+# testing the null beta = 0 for `str`.
+summary(lm_multi)
+```
+
+Because the p-value is less than 5%, the null hypothesis can be rejected at the 5% significance level (but not quite at the 1% significance level)
+
+---
+
+**95% confidence intervals**
+
+```{r}
+ (c <- round(confint(lm_multi, level = 0.95), 2))
+```
+
+- We can be 95% confident that the true value of the coefficient of STR is between `r c[2,1]` and `r c[2,2]`.
+- **Implication:** Reducing class size will improve test scores.
+
+--- 
+
+>- Your analysis of the `lm_multi` model has persuaded the superintendent that, based on the evidence so far, reducing class size will improve test scores in her district. 
+
+>- Now, however, she moves on to a more nuanced question. If she is to hire more teachers, she can pay for those teachers either through cuts elsewhere in the budget (no new computers, reduced maintenance, and so on) or by asking for an increase in her budget, which taxpayers do not favor. 
+
+>- What, she asks, is <u>the effect on test scores of reducing the student–teacher ratio</u> (i.e. reducing class size), holding expenditures per pupil (and the percentage of English learners) constant?
+
+---
+
+- Our multiple regression model is
+$$
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL + \beta_3Expn
+$$
+
+where, $Expn$ is the *expenditures per student*.
+
+- We now need to `update()` our `lm_multi` model by adding `expn_stu`.
+```{r}
+lm_multi_expn <- update(lm_multi, . ~ . + expn_stu) 
+summary(lm_multi_expn)
+```
+
+- Because the p-value is <u>greater</u> than 5%, the null hypothesis <u>cannot</u> be rejected at the 5% significance level (or even at the 10% significance level).
+
+- Therefore, there is no evidence that hiring more teachers improves test scores if overall expenditures per pupil are held constant.
+
+---
+
+**A case for imperfect multicollinearity**
+
+Note that the standard error on `str` increased when `expn_stu` was added:
+```{r, warning=FALSE, message=FALSE}
+library(tidyverse)
+library(kableExtra)
+data.frame(
+  Model = c("lm_multi", "lm_multi_expn"),
+  StandardError = c(summary(lm_multi)$coefficients[2,2], 
+                       summary(lm_multi_expn)$coefficients[2,2])  
+) %>% kable() %>% kable_styling(bootstrap_options = c("striped", "hover"), full_width = FALSE,
+                                position = "center", font_size = 18)
+```
+
+
+
+# 4.2 Tests of Joint Hypotheses {#four-two}
+
+
+**Joint null hypotheses**
+
+- Consider the model
+$$
+\hat{TestScore} = \beta_0 + \beta_1STR + \beta_2PctEL + \beta_3Expn
+$$
+- **Joint Hypotheses:** Neither the student-teacher ratio $STR$, nor expenditure per pupil $Expn$ have an effect on test scores, controlling for the percentage of English learners $PctEL$.
+$$
+H_0:\beta_1 =0 \text{ and }\beta_2 = 0\\
+H_1: \beta_1\neq0 \text{ and/or }\beta_2\neq0.
+$$
+- If any ***one (or more than one)*** of $H_0$ if false, then the joint null hypothesis is itself false.
+
+## {.smaller}
+
+**The *F*-Statistic**
+
+- The *F*-Statistic is used to test the joint hypotheses about regression coefficients.
+- Package required: `car`
+- Function: `linearHypothesis()`
+
+The homoskedasticity-only *F*-Statistic is given by:
+$$
+F = \frac{(SSR_{restricted}-SSR_{unrestricted})/q}{SSR_{unrestricted}/(n-k-1)}\\
+$$
+where;$SSR_{restricted}$ is the sum of squared residuals from the restricted model
+
+$SSR_{unrestricted}$ is the sum of squared residuals from the full model
+
+$q$ is the number of restrictions under the null
+
+and, $k$ is the number of regressors in the unrestricted regression
+
+## {.smaller}
+
+- Our regression model is `lm_multi_expn` that we estimated earlier.
+- We now conduct the *F*-test using `linearHypothesis()`.
+```{r, warning=FALSE, message=FALSE}
+library(car)
+(l <- linearHypothesis(model = lm_multi_expn, 
+        hypothesis.matrix = c("str = 0", "expn_stu = 0")))
+```
+
+The output shows that the value of *F*-statistic is `r round(l$F[2] ,digits = 2)` and the corresponding *p*-value is `r options(scipen = 999);l$'Pr(>F)'[2]`. Thus we can **reject the null hypotheses** that both coefficients are zero at 95% confidence level.
+
+## {.smaller}
+
+The heteroskedasticity-robust version of *F*-test;
+```{r}
+(lr <- linearHypothesis(model = lm_multi_expn, 
+                       hypothesis.matrix = c("str = 0", "expn_stu = 0"),
+                       white.adjust = "hc1"))
+```
+
+## Confidence sets for multiple coefficients
+- Confidence sets consist of combinations of coefficients that contain the true combination of coefficients.
+- Put differently, a confidence set is the set of all coefficient combinations for which we cannot reject the corresponding joint null hypothesis tested using an *F*-test.
+- A 95% confidence set for two or more coefficients is a set that contains the true population values of these coefficients in 95% of randomly drawn samples.
+
+## {.smaller}
+
+**95% Confidence Set for Coefficients on `str` and `expn_stu`**
+
+```{r, eval=FALSE}
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c("str", "expn_stu"), ylim = c(0,0.0075),
+                  main = "95% confidence set")
+```
+
+```{r, echo=FALSE}
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c("str", "expn_stu"), ylim = c(0,0.0075),
+                  main = "95% confidence set")
+arrows(x1 = 0, x0 = 0.2, y1 = 0, y0 = 0.001, length = 0 )
+text(x = 0.46, y = 0.001, expression((beta[1]~","~ beta[3])~"="~("0,0")))
+arrows(x1 = -0.3, x0 = 0.2, y1 = 0.004, y0 = 0.002, length = 0 )
+text(x = 0.55, y = 0.002, expression((hat(beta[1])~","~ hat(beta[2]))~"="~("-0.3,0.004")))
+text(-0.5, 0.006,expression(paste("Point (0,0) is not element of\nthe 95% confidence set so that we can reject", ~H[0]:beta[1]~"= 0,"~beta[3]~"= 0"), sep = " "))
+```
+
+
+
+## {.smaller}
+**Robust 95% Confidence Set for Coefficients on `str` and `expn_stu`**
+```{r}
+# draw the robust 95% confidence set
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c("str", "expn_stu"),
+                  ylim = c(-0.001, 0.008),
+                  vcov. = sandwich::vcovHC(lm_multi_expn, type = "HC1"),
+                  col = "red")
+
+# draw the homoscedasticity-only 95% confidence set
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c("str", "expn_stu"),
+                  ylim = c(-0.001, 0.008), 
+                  add = TRUE)
+```
+
+The robust standard errors are slightly larger than those under homoskedasticity-only case, thus the robust confidence set is slightly larger.
+
+
+
+## {.smaller}
+- The confidence ellipse is a fat sausage with the long part of the sausage oriented in the lower-left/upper-right direction. 
+- The reason for this orientation is that the estimated correlation between $\beta_1$ and $\beta_3$ is positive, which in turn arises because the correlation between the regressors `str` and `expn_stu` is negative (schools that spend more per pupil tend to have fewer students per teacher).
+- You can see, below, that the 95% confidence set for coefficients of `el_pct` and `str` is negative.
+```{r, echo=FALSE}
+confidenceEllipse(lm_multi_expn, fill = TRUE,
+                  which.coef = c("str", "el_pct"))
+```
+
+# 4.3 Model Specification for Multiple Regression {#four-three}
+**Omitted Variable Bias in Multiple Regression**
+
+>- Omitted variable bias is the bias in the OLS estimator that arises when one or more included regressors are correlated with an omitted variable. 
+
+>- For omitted variable bias to arise, two things must be true:
+      >- At least one of the included regressors must be correlated with the omitted variable.
+      >- The omitted variable must be a determinant of the dependent variable, Y.
+    
+>- In our model $\hat{testscr}=\beta_0 + \beta_1\text{str} + \beta_2\text{el_pct}$, we are looking for a causal effect of class size `el_pct` on test score `str`.
+
+>- There could be a bias due to omitting `outside learning opportunities`.
+
+>- For `outside learning opportunities` is a complicated concept to measure, we can consider the variable `meal_pct`.
+      >- `meal_pct` is the percentage of students that qualify for a free or subsidised lunch due to family incomes below a certain threshold.
+
+## {.smaller}
+```{r}
+# estimate the heteroskedasticity-robust model
+lm_control_model <- lm(testscr ~ str + el_pct + 
+                        meal_pct, data = caschool)
+lmtest::coeftest(lm_control_model, 
+      vcov. = sandwich::vcovHC(lm_control_model,type = "HC1"))
+```
+
+We observe no substantial changes in the conclusion about the effect of size on `testscr`: the coefficient on `str` changes by only 0.1 and retains its significance.
+
+
+# 4.4 Analysis of the `testscr` data set {#four-four}
+
+
+We shall consider the following models and graphically inspect the correlation and summarise all the regression results in a table.
+$$
+\begin{align*}
+\text{(I)  }\text{testscr} &= \beta_0 + \beta_1\text{str} + u\\
+\text{(II)  }\text{testscr} &= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + u\\
+\text{(III)  }\text{testscr} &= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{meal_pct} + u\\
+\text{(IV)  }\text{testscr} &= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{calw_pct} + u\\
+\text{(V)  }\text{testscr} &= \beta_0 + \beta_1\text{str} + \beta_2\text{el_pct} + \beta_3\text{meal_pct} + \beta_4\text{calw_pct} + u\\
+\end{align*}
+$$
+
+where, `testscr`- test score
+`str` - student-teacher ratio
+`el_pct` - percentage of english learners
+`meal_pct` - percentage of students that qualify for a free or subsidised lunch due to family incomes below a certain threshold.
+`calw_pct` - percentage of students qualifying for reduced-price lunch.
+
+## {.smaller}
+
+```{r,  warning=FALSE}
+# models
+I <- lm(testscr ~ str, data = caschool)
+II <- lm(testscr ~ str + el_pct, data = caschool)
+III <- lm(testscr ~ str + el_pct + meal_pct, data = caschool)
+IV <- lm(testscr ~ str + el_pct + calw_pct, data = caschool)
+V <- lm(testscr ~ str + el_pct + meal_pct + calw_pct, data = caschool)
+
+# gather all the robust standard error values in a list
+robust_se <- list(
+  sqrt(diag(sandwich::vcovHC(I, type = "HC1"))),
+  sqrt(diag(sandwich::vcovHC(II, type = "HC1"))),
+  sqrt(diag(sandwich::vcovHC(III, type = "HC1"))),
+  sqrt(diag(sandwich::vcovHC(IV, type = "HC1"))),
+  sqrt(diag(sandwich::vcovHC(V, type = "HC1")))
+)
+
+## use the `stargazer()` function to represent the output in a tabular form
+stargazer::stargazer(I, II, III, IV, V, type = "text", 
+                     title = "Analysis of testscore dataset.",
+                     se = robust_se, digits = 3, 
+                     column.labels = c("I", "II", "III", "IV", "V"),
+                     column.sep.width = "1pt",
+                     out = "testscre models.txt",
+                     notes = "Heteroskedasticity robust standard errors are given in parentheses under coefficients.", 
+                     notes.append = TRUE) 
+```
+
+
+
+
+# 4.5 Exercises {#four-five}
+
+7.1 Use the[ Birthweight_Smoking](birthweight_smoking.xlsx) data set introduced in Empirical Exercise E5.3 to answer the following questions. To begin, run three regressions:
+
+1 Birthweight on Smoker
+
+2 Birthweight on Smoker, Alcohol, and Nprevist
+
+3 Birthweight on Smoker, Alcohol, Nprevist, and Unmarried
+
+a What is the value of the estimated effect of smoking on birth weight in each of the regressions?
+
+b Construct a 95% confidence interval for the effect of smoking on birth weight, using each of the regressions.
+
+c Does the coefficient on Smoker in regression (1) suffer from omitted variable bias? Explain.
+
+d Does the coefficient on Smoker in regression (2) suffer from omitted variable bias? Explain.
+
+
+e Consider the coefficient on Unmarried in regression (3).
+
+i Construct a 95% confidence interval for the coefficient.
+
+ii Is the coefficient statistically significant? Explain.
+
+iii Is the magnitude of the coefficient large? Explain.
+
+iv A family advocacy group notes that the large coefficient suggests that public policies that encourage marriage will lead, on average, to healthier babies. Do you agree? (Hint: Review the discussion of control variables in Section 7.5. Discuss some of the various factors that Unmarried may be controlling for and how this affects the interpretation of its coefficient.)
+
+f Consider the various other control variables in the data set. Which do you think should be included in the regression? Using a table like Table 7.1, examine the robustness of the confidence interval you constructed in (b). What is a reasonable 95% confidence interval for the effect of smoking on birth weight?
+
+**In addition, also solve exercise E7.2 in the book given in pages 296 and 297.**

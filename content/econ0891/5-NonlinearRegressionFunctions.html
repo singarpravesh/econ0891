@@ -1,0 +1,724 @@
+---
+title: "5: Nonlinear Regression Functions"
+author: "pravesh"
+date: "2021-03-27"
+output: html_document
+---
+
+<script src="/rmarkdown-libs/kePrint/kePrint.js"></script>
+<link href="/rmarkdown-libs/lightable/lightable.css" rel="stylesheet" />
+
+
+<div id="contents" class="section level1">
+<h1>Contents</h1>
+<p><a href="#five-one">5.1 A General Strategy for Modelling Nonlinear Regression Functions</a><br>
+<a href="#five-two">5.2 Interactions between independent variables</a><br>
+<a href="#five-three">5.3 Example: The demand for economics journals</a><br>
+<a href="#five-four">5.4 Nonlinear Effects on Test Scores of the Student-Teacher Ratio</a><br>
+<a href="#five-five">5.5 Exercise</a></p>
+</div>
+<div id="five-one" class="section level1">
+<h1>5.1 A General Strategy for Modelling Nonlinear Regression Functions</h1>
+<p>What is wrong with the linear fit?
+<img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<blockquote>
+<ul>
+<li>The linear regression line seems to overestimate the true relationship when income is very high or very low and underestimates it for the middle income group.</li>
+</ul>
+</blockquote>
+<div id="section" class="section level2 smaller">
+<h2></h2>
+<p><strong>The quadratic regression model</strong></p>
+<p><span class="math display">\[
+\text{testscr}=\beta_0 + \beta_1\text{avginc}+ \beta_2\text{avginc}^2 + u
+\]</span></p>
+<pre class="r"><code># the quadratic model
+quad_model &lt;- lm(testscr ~ avginc + I(avginc^2), data = caschool)
+
+# heteroscedasticity-robust model summary
+lmtest::coeftest(quad_model, vcov. = sandwich::vcovHC(quad_model, 
+                                                      type = &quot;HC1&quot;))</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##                Estimate  Std. Error  t value  Pr(&gt;|t|)    
+## (Intercept) 607.3017350   2.9017539 209.2878 &lt; 2.2e-16 ***
+## avginc        3.8509947   0.2680941  14.3643 &lt; 2.2e-16 ***
+## I(avginc^2)  -0.0423085   0.0047803  -8.8505 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<hr />
+<pre class="r"><code># assign id&#39;s to the values of avginc in increasing order
+order_id &lt;- order(caschool$avginc) 
+# draw lines with values ordered in ascending order and plot
+plot(testscr~ avginc, data = caschool, 
+     xlab = &quot;Average Income&quot;, 
+     ylab = &quot;Test score&quot;)
+abline(lm(testscr ~ avginc, data = caschool))
+lines(x = caschool$avginc[order_id], 
+      y = fitted(quad_model)[order_id], col = &quot;red&quot;)
+legend(&quot;bottomright&quot;,legend = c(&quot;linear model&quot;, &quot;quadratic model&quot;),
+       col = c(&quot;black&quot;, &quot;red&quot;),
+       lty = 1)</code></pre>
+<p><img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+</div>
+<div id="section-1" class="section level2 smaller">
+<h2></h2>
+<p><strong>Interpretation of Coefficients in Nonlinear Regression Models</strong></p>
+<p>The expected effect on <span class="math inline">\(Y\)</span> of a change in <span class="math inline">\(X_1\)</span> in a non-linear regression model.<br> Consider the nonlinear model
+<span class="math display">\[
+Y_i = f(X_{1i}, X_{2i}, \dots, X_{ki}) + u_i \ , \ i=1,\dots,n,
+\]</span>
+where, <span class="math inline">\(f(X_{1i}, X_{2i}, \dots, X_{ki})\)</span> is the population regression function and <span class="math inline">\(u_i\)</span> is the error term. <br>
+Denote by ΔY the expected change in <span class="math inline">\(Y\)</span> associated with <span class="math inline">\(\Delta{X_1}\)</span>, the change in <span class="math inline">\(X_1\)</span> while holding <span class="math inline">\(X_2,\dots,X_k\)</span> constant. That is, the expected change in <span class="math inline">\(Y\)</span> is the difference <span class="math display">\[
+\Delta{Y}=f(X_1+\Delta{X_1},X_2,⋯,X_k)−f(X_1,X_2, \dots, X_k).
+\]</span>
+The estimator of this unknown population difference is the difference between the predicted values for these two cases. Let <span class="math inline">\(\hat{f}(X_1,X_2, \ldots,X_k)\)</span> be the predicted value of of <span class="math inline">\(Y\)</span> based on the estimator <span class="math inline">\(\hat{f}\)</span> of the population regression function. Then the predicted change in <span class="math inline">\(Y\)</span> is
+<span class="math display">\[
+\Delta \widehat{Y} = \hat{f}(X_1 + \Delta X_1, X_2, \cdots, X_k) - \hat{f}(X_1, X_2, \cdots, X_k).\]</span></p>
+<ul>
+<li><strong>Question:</strong> What is the effect of one unit change in <code>avginc</code> in the 25 quantile and 95 quantile income levels on <code>testscr</code>?
+<ol style="list-style-type: decimal">
+<li>Estimate the <code>quad_model</code>.</li>
+<li>Calculate the 25 and 95 quantile values for <code>avginc</code>.</li>
+<li>Use the formula to calculate the change in predicted value of test-score.</li>
+</ol></li>
+</ul>
+<p><span class="math display">\[
+\begin{align*}
+\Delta{\hat{testscr_{25}}}= (\hat{\beta_0} + 
+\hat{\beta_1}(\text{25 quantile value + 1 unit}) + \\
+\hat{\beta_2}(\text{25 quantile value + 1 unit})^2)\\
+- (\hat{\beta_0} + \hat{\beta_1}(\text{25 quantile value}) +\\ 
+\hat{\beta_2}(\text{25 quantile value})^2)
+\end{align*}
+\]</span></p>
+<p>and</p>
+<p><span class="math display">\[
+\begin{align*}
+\Delta{\hat{testscr_{95}}}= (\hat{\beta_0} + \hat{\beta_1}(\text{95 quantile value + 1 unit}) +\\
+\hat{\beta_2}(\text{95 quantile value + 1 unit})^2)\\
+- (\hat{\beta_0} + \hat{\beta_1}(\text{95 quantile value}) + \\
+\hat{\beta_2}(\text{95 quantile value})^2)
+\end{align*}
+\]</span></p>
+<pre class="r"><code># the model we already calculated
+quad_model</code></pre>
+<pre class="r"><code># Calculate the 25 and 95 quantile values
+q25 &lt;- as.integer(quantile(caschool$avginc, 0.25))
+q95 &lt;- as.integer(quantile(caschool$avginc, 0.95))
+
+# calculate prediced testscr
+hat_testscr_25 &lt;- predict(quad_model, newdata = data.frame(avginc = c(q25, q25+1)))
+hat_testscr_95 &lt;- predict(quad_model, newdata = data.frame(avginc = c(q95, q95+1)))
+
+# calculate the difference
+diff_hat_testscr_25 &lt;- hat_testscr_25[2] -hat_testscr_25[1]
+diff_hat_testscr_95 &lt;- hat_testscr_95[2] -hat_testscr_95[1]
+
+library(tidyverse)
+data.frame(Predicted_testscr = c(&quot;25 quantile&quot;, &quot;95 quantile&quot;),
+           Difference = c(diff_hat_testscr_25, diff_hat_testscr_95)) %&gt;% kableExtra::kable() %&gt;% kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;), position = &quot;center&quot;, full_width = FALSE)</code></pre>
+<table class="table table-striped" style="width: auto !important; margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Predicted_testscr
+</th>
+<th style="text-align:right;">
+Difference
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+25 quantile
+</td>
+<td style="text-align:right;">
+2.962517
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+95 quantile
+</td>
+<td style="text-align:right;">
+1.270179
+</td>
+</tr>
+</tbody>
+</table>
+<p>So, for the quadratic model, the expected change in <code>testscr</code> induced by an increase in income from 10 to 11 is about 2.96 points but an increase in income from 30 to 31 increases the predicted score by only 1.27. Hence, the slope of the estimated quadratic regression function is steeper at low levels of income than at higher levels.</p>
+</div>
+<div id="section-2" class="section level2 smaller">
+<h2></h2>
+<strong>Logarithms</strong>
+<div style='display: grid; 
+            text-align: center;
+            background-color: antiquewhite'
+>
+
+<table>
+<thead>
+<tr class="header">
+<th align="center">
+Case
+</th>
+<th align="center">
+Model Specification
+</th>
+<th align="center">
+R code
+</th>
+<th align="center">
+Interpretation of <span class="math inline">\(\beta_1\)</span>
+</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td align="left">
+I
+</td>
+<td align="left">
+<span class="math inline">\(Y_i = \beta_0 + \beta_1\ln(X_i) + u_i\)</span>
+</td>
+<td align="left">
+<code>lm(testscr ~ log(avginc), data = caschool)</code>
+</td>
+<td align="left">
+A <span class="math inline">\(1\%\)</span> change in <span class="math inline">\(X\)</span> is associated with a change in <span class="math inline">\(Y\)</span> of <span class="math inline">\(0.01 \times \beta_1\)</span>.
+</td>
+</tr>
+<tr class="even">
+<td align="left">
+II
+</td>
+<td align="left">
+<span class="math inline">\(\ln(Y_i) = \beta_0 + \beta_1 X_i + u_i\)</span>
+</td>
+<td align="left">
+<code>lm(log(testscr) ~ avginc, data = caschool)</code>
+</td>
+<td align="left">
+A change in <span class="math inline">\(X\)</span> by one unit (<span class="math inline">\(\Delta X = 1\)</span>) is associated with a <span class="math inline">\(100 \times \beta_1 \%\)</span> change in <span class="math inline">\(Y\)</span>.
+</td>
+</tr>
+<tr class="odd">
+<td align="left">
+III
+</td>
+<td align="left">
+<span class="math inline">\(\ln(Y_i) = \beta_0 + \beta_1 \ln(X_i) + u_i\)</span>
+</td>
+<td align="left">
+<code>lm(log(testscr) ~ log(avginc), data = caschool)</code>
+</td>
+<td align="left">
+A <span class="math inline">\(1\%\)</span> change in <span class="math inline">\(X\)</span> is associated with a <span class="math inline">\(\beta_1\%\)</span> change in <span class="math inline">\(Y\)</span>, so <span class="math inline">\(\beta_1\)</span> is the elasticity of <span class="math inline">\(Y\)</span> with respect to <span class="math inline">\(X\)</span>.
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div id="five-two" class="section level1">
+<h1>5.2 Interactions between independent variables</h1>
+<p><strong>Interaction between two binary variables</strong></p>
+<p>Consider the following model
+<span class="math display">\[
+\hat{testscr} = \beta_0 + \beta_1HiSTR + \beta_2HiEL + \beta_3(HiSTR \times HiEL) + u_i\\
+\begin{align*}
+  HiSTR =&amp; \, 
+    \begin{cases}
+      1, &amp; \text{if str $ \geq 20$} \\
+      0, &amp; \text{else},
+    \end{cases} \\
+  \\
+  HiEL =&amp; \,
+    \begin{cases}
+      1, &amp; \text{if el_pct $ \geq 10$} \\
+      0, &amp; \text{else}.
+    \end{cases}
+\end{align*}
+\]</span></p>
+<p>Here, <span class="math inline">\(\beta_3\)</span> measures the difference in the effect of having high student ratio and english learners as opposed to those districts having low <code>str</code> and more native english speakers.</p>
+<div id="section-3" class="section level2 smaller">
+<h2></h2>
+<p>…contd</p>
+<pre class="r"><code># create and append the binary variables
+caschool$HiSTR &lt;- ifelse(caschool$str &gt;= 20, 1, 0)
+caschool$HiEL &lt;- ifelse(caschool$el_pct &gt;=10, 1, 0)
+
+# the model
+BinaryInteraction &lt;- lm(testscr ~ HiSTR + HiEL + (HiSTR*HiEL), data = caschool)
+
+# robust summary
+RobustSummaryBinaryInteraction &lt;-lmtest::coeftest(BinaryInteraction, 
+                vcov. = sandwich::vcovHC(BinaryInteraction, type = &quot;HC1&quot;))
+
+stargazer::stargazer(RobustSummaryBinaryInteraction, type = &quot;text&quot;, out = &quot;RobustBinaryInteraction.txt&quot;)</code></pre>
+<pre><code>## 
+## ======================================
+##                Dependent variable:    
+##            ---------------------------
+##                                       
+## --------------------------------------
+## HiSTR                -1.908           
+##                      (1.932)          
+##                                       
+## HiEL               -18.163***         
+##                      (2.346)          
+##                                       
+## HiSTR:HiEL           -3.494           
+##                      (3.121)          
+##                                       
+## Constant           664.143***         
+##                      (1.388)          
+##                                       
+## ======================================
+## ======================================
+## Note:      *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+<div id="section-4" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li><p>The predicted effect of moving from a district with a low student–teacher ratio to one with a high student–teacher ratio, holding constant whether the percentage of English learners is high or low is <span class="math inline">\(-1.9 - 3.5HiEL\)</span>. That is, if the fraction of English learners is low <span class="math inline">\((HiEL = 0)\)</span>, then the effect on test scores of moving from <span class="math inline">\(HiSTR = 0\)</span> to <span class="math inline">\(HiSTR = 1\)</span> is for test scores to decline by 1.9 points. If the fraction of English learners is high, then test scores are estimated to decline by <span class="math inline">\(1.9 + 3.5 = 5.4\)</span> points.</p></li>
+<li><p>Accordingly, the sample average test score for districts with low student–teacher ratios <span class="math inline">\((HiSTR_i = 0)\)</span> and low fractions of English learners <span class="math inline">\((HiEL_i = 0)\)</span> is 664.1. For districts with <span class="math inline">\(HiSTR_i = 1\)</span> (high student–teacher ratios) and <span class="math inline">\(HiEL_i = 0\)</span> (low fractions of English learners), the sample average is 662.2 (= 664.1 - 1.9). When <span class="math inline">\(HiSTR_i = 0\)</span> and <span class="math inline">\(HiEL_i = 1\)</span>, the sample average is 645.9 (= 664.1 - 18.2), and when <span class="math inline">\(HiSTR_i = 1\)</span> and <span class="math inline">\(HiEL_i = 1\)</span>, the sample average is 640.5 (= 664.1 - 1.9 - 18.2 - 3.5).</p></li>
+</ul>
+<p><strong>Interactions between a binary and a continuous variable</strong></p>
+<ul>
+<li><strong>Question:</strong> Whether the effect on test scores <code>testscr</code> of decreasing the student-teacher ratio <code>str</code> depends on whether there are many or few English learners <code>HiEL</code>.</li>
+<li>Consider the following model:
+<span class="math display">\[
+\hat{testscr_i} = \beta_0 + \beta_1str_i+ \beta_2HiEL_i + \beta_3(HiEL_i\times str_i) + u_i
+\]</span></li>
+</ul>
+</div>
+<div id="section-5" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># estimate the model
+BinContInteract &lt;- lm(testscr ~ str + HiEL + (HiEL*str), data = caschool)
+
+# robust summary of the model
+RobustSummaryBinContInteract &lt;- lmtest::coeftest(
+  BinContInteract, vcov. = sandwich::vcovHC(BinContInteract, type = &quot;HC1&quot;))
+
+stargazer::stargazer(RobustSummaryBinContInteract, type = &quot;text&quot;, out = &quot;RobustSummaryBinContInteract.txt&quot;)</code></pre>
+<pre><code>## 
+## ====================================
+##              Dependent variable:    
+##          ---------------------------
+##                                     
+## ------------------------------------
+## str                -0.968           
+##                    (0.589)          
+##                                     
+## HiEL                5.639           
+##                   (19.515)          
+##                                     
+## str:HiEL           -1.277           
+##                    (0.967)          
+##                                     
+## Constant         682.246***         
+##                   (11.868)          
+##                                     
+## ====================================
+## ====================================
+## Note:    *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+<div id="section-6" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li>The regression model is
+<span class="math display">\[
+\hat{testscr} = 682.24 - 0.97str+5.64HiEL-1.28(str \times HiEL)
+\]</span></li>
+<li>For <span class="math inline">\(HiEL=1\)</span>, the regression is
+<span class="math display">\[
+\hat{testscr} = 682.24 - 0.97str+5.64-1.28str
+\]</span></li>
+<li>For <span class="math inline">\(HiEl=0\)</span>, the regression is
+<span class="math display">\[
+\hat{testscr} = 682.24 - 0.97str
+\]</span></li>
+</ul>
+<hr />
+<pre class="r"><code>plot(caschool[caschool$HiEL == 0,c(14, 11)], col = &quot;red&quot;, 
+     ylim = c(min(caschool$testscr), max(caschool$testscr)) )
+points(caschool[caschool$HiEL == 1,c(14, 11)], col = &quot;blue&quot;)
+abline(coef = c(RobustSummaryBinContInteract[1], 
+                RobustSummaryBinContInteract[2]), col = &quot;red&quot;)
+abline(coef = c((RobustSummaryBinContInteract[1] + RobustSummaryBinContInteract[3]), 
+                (RobustSummaryBinContInteract[2] + RobustSummaryBinContInteract[4])), 
+       col = &quot;blue&quot;)
+legend(&quot;topright&quot;,legend = c(expression(HiEL==0), expression(HiEL==1)),
+       lty = 1, col = c(&quot;red&quot;, &quot;blue&quot;))</code></pre>
+<div class="figure"><span id="fig:HiE"></span>
+<img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/HiE-1.png" alt="HiEL=0 vs HiEL=1" width="672" />
+<p class="caption">
+Figure 1: HiEL=0 vs HiEL=1
+</p>
+</div>
+<p><strong>Interactions between two continuous variables</strong></p>
+<ul>
+<li>Interaction between <code>str</code> and <code>el_pct</code>.</li>
+</ul>
+<pre class="r"><code># the model
+ContinuousInteraction &lt;- lm(testscr ~ str + el_pct + (str*el_pct), data = caschool)
+
+# robust estimates summary
+RobustSummaryContinuousInteraction &lt;- lmtest::coeftest(
+  ContinuousInteraction, vcov. = sandwich::vcovHC(ContinuousInteraction, type = &quot;HC1&quot;)
+)
+stargazer::stargazer(RobustSummaryContinuousInteraction, type = &quot;text&quot;)</code></pre>
+<pre><code>## 
+## ======================================
+##                Dependent variable:    
+##            ---------------------------
+##                                       
+## --------------------------------------
+## str                  -1.117*          
+##                      (0.588)          
+##                                       
+## el_pct               -0.673*          
+##                      (0.374)          
+##                                       
+## str:el_pct            0.001           
+##                      (0.019)          
+##                                       
+## Constant           686.339***         
+##                     (11.759)          
+##                                       
+## ======================================
+## ======================================
+## Note:      *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+</div>
+<div id="five-three" class="section level1">
+<h1>5.3 Example: The demand for economics journals</h1>
+<ul>
+<li><strong>Question:</strong>
+<ul>
+<li>How elastic is the demand by libraries for economics journals?</li>
+</ul></li>
+<li><strong>What shall we do?</strong>
+<ul>
+<li>Analyse the relationship between the <em>number of subscriptions</em> <code>(subs)</code> to a journal at U.S. libraries <span class="math inline">\((Y_i)\)</span> and the journal’s library subscription price using data for the year 2000 for 180 economics journals.</li>
+</ul></li>
+<li><strong>Data source</strong>:
+<ul>
+<li><code>data(Journals, package = "AER")</code></li>
+<li><code>?Journals()</code> for description of variables.</li>
+</ul></li>
+</ul>
+<div id="section-7" class="section level2 smaller">
+<h2></h2>
+<p><strong>Relationship between <em>number of subscriptions</em> <code>(subs)</code> and <em>price per citation</em> <code>(PricePerCitation)</code></strong></p>
+<pre class="r"><code># Create and append `PricePerCitation` 
+data(&quot;Journals&quot;, package = &quot;AER&quot;)
+journals &lt;- Journals
+journals$PricePerCitation &lt;- Journals$price / Journals$citations
+# plot
+plot(subs ~ PricePerCitation, data = journals)</code></pre>
+<p><img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="section-8" class="section level2 smaller">
+<h2></h2>
+<ul>
+<li>Because we are interested in estimating elasticities, we use a log-log specification.</li>
+<li>The scatterplot for log-log specification is given below:</li>
+</ul>
+<pre class="r"><code>plot(log(subs)~log(PricePerCitation), data = journals)
+abline(lm(log(subs) ~ log(PricePerCitation), data = journals))</code></pre>
+<p><img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<p>We shall now estimate the following models and summarise the output in a table.
+<span class="math display">\[
+\begin{align*}
+  \text{A}\quad \ln(subs_i) =&amp; \, \beta_0 + \beta_1 \ln(PricePerCitation_i) + u_i \\
+  \text{B}\quad \ln(subs_i) =&amp; \, \beta_0 + \beta_1 \ln(PricePerCitation_i) + \beta_4 \ln(Age_i)\\
+  +&amp; \beta_6 \ln(Characters_i) + u_i \\
+\text{C}\quad \ln(subs_i) =&amp; \, \beta_0 + \beta_1 \ln(PricePerCitation_i) + \beta_2 \ln(PricePerCitation_i)^2 \\
+  +&amp; \, \beta_3 \ln(PricePerCitation_i)^3 + \beta_4 \ln(Age_i) \\+&amp; \beta_5 \left[\ln(Age_i) \times \ln(PricePerCitation_i)\right] \\ +&amp; \, \beta_6 \ln(Characters_i) + u_i \\
+\text{D}\quad \ln(subs_i) =&amp; \, \beta_0 + \beta_1 \ln(PricePerCitation_i) + \beta_4 \ln(Age_i)\\ +&amp; \beta_6 \ln(Characters_i) + u_i
+\end{align*}
+\]</span></p>
+<p>where; <br>
+<span class="math inline">\(subs\)</span>- is the number of library subscriptions.<br>
+<span class="math inline">\(PricePerCitation\)</span> - is the price per citation. <br>
+<span class="math inline">\(Age\)</span> - is the age of the journal (we have to create and append this variable) <br>
+<span class="math inline">\(Characters\)</span> - is the number of characters per year in the journal.</p>
+<pre class="r"><code># create and append the variables
+# we already have `PricePerCitation` and `subs`.
+journals$Age &lt;- 2000 - journals$foundingyear
+journals$Characters &lt;- journals$charpp * journals$pages/1000000
+
+# the data that we need
+head(journals[,c(9, 11:13)])</code></pre>
+<pre><code>##        subs PricePerCitation Age Characters
+## APEL     14        5.8571429  14   1.681680
+## SAJoEH   59        0.9090909  14   0.550638
+## CE       17       20.1363636  13   1.657908
+## MEPiTE    2       12.5454545   9   1.681680
+## JoSE     96       12.2916667  28   2.391984
+## LabEc    15       14.3333333   6   1.806903</code></pre>
+</div>
+<div id="section-9" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># estimate the models
+A &lt;- lm(log(subs) ~ log(PricePerCitation), data = journals)
+B &lt;- lm(log(subs) ~ log(PricePerCitation) + log(Age) + log(Characters), data = journals)
+C &lt;- lm(log(subs) ~ log(PricePerCitation) + I(log(PricePerCitation)^2) +
+          I(log(PricePerCitation)^3) + log(Age) + log(Age)*log(PricePerCitation) +
+          log(Characters) , data = journals)
+D &lt;-lm(log(subs) ~ log(PricePerCitation) + log(Age) + log(Age)*log(PricePerCitation) + log(Characters), data = journals)
+
+# robust standard error estimates
+library(sandwich)</code></pre>
+<pre><code>## Warning: package &#39;sandwich&#39; was built under R version 4.0.3</code></pre>
+<pre class="r"><code>robustSE &lt;- list(
+  sqrt(diag(vcovHC(A, type = &quot;HC1&quot;))),
+  sqrt(diag(vcovHC(B, type = &quot;HC1&quot;))),
+  sqrt(diag(vcovHC(C, type = &quot;HC1&quot;))),
+  sqrt(diag(vcovHC(D, type = &quot;HC1&quot;)))
+)
+# stargazer
+stargazer::stargazer(A, B, C, D, type = &quot;text&quot;,
+                     se = robustSE,
+                     digits = 3, 
+                     column.labels = c(&quot;A&quot;, &quot;B&quot;, &quot;C&quot;, &quot;D&quot;))</code></pre>
+<pre><code>## 
+## ===============================================================================================================================
+##                                                                      Dependent variable:                                       
+##                                ------------------------------------------------------------------------------------------------
+##                                                                           log(subs)                                            
+##                                           A                        B                       C                       D           
+##                                          (1)                      (2)                     (3)                     (4)          
+## -------------------------------------------------------------------------------------------------------------------------------
+## log(PricePerCitation)                 -0.533***                -0.408***               -0.961***               -0.899***       
+##                                        (0.034)                  (0.044)                 (0.160)                 (0.145)        
+##                                                                                                                                
+## I(log(PricePerCitation)2)                                                                0.017                                 
+##                                                                                         (0.025)                                
+##                                                                                                                                
+## I(log(PricePerCitation)3)                                                                0.004                                 
+##                                                                                         (0.006)                                
+##                                                                                                                                
+## log(Age)                                                       0.424***                0.373***                0.374***        
+##                                                                 (0.119)                 (0.118)                 (0.118)        
+##                                                                                                                                
+## log(Characters)                                                 0.206**                 0.235**                 0.229**        
+##                                                                 (0.098)                 (0.098)                 (0.096)        
+##                                                                                                                                
+## log(PricePerCitation):log(Age)                                                         0.156***                0.141***        
+##                                                                                         (0.052)                 (0.040)        
+##                                                                                                                                
+## Constant                               4.766***                3.207***                3.408***                3.434***        
+##                                        (0.055)                  (0.380)                 (0.374)                 (0.367)        
+##                                                                                                                                
+## -------------------------------------------------------------------------------------------------------------------------------
+## Observations                             180                      180                     180                     180          
+## R2                                      0.557                    0.613                   0.635                   0.634         
+## Adjusted R2                             0.555                    0.607                   0.622                   0.626         
+## Residual Std. Error                0.750 (df = 178)        0.705 (df = 176)        0.691 (df = 173)        0.688 (df = 175)    
+## F Statistic                    224.037*** (df = 1; 178) 93.009*** (df = 3; 176) 50.149*** (df = 6; 173) 75.749*** (df = 4; 175)
+## ===============================================================================================================================
+## Note:                                                                                               *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+<div id="section-10" class="section level2 smaller">
+<h2></h2>
+<p><strong><em>F</em>-test for significance of cubic terms</strong></p>
+<pre class="r"><code>car::linearHypothesis(model = C, 
+  hypothesis.matrix = c(&quot;I(log(PricePerCitation)^2)=0&quot;,
+                        &quot;I(log(PricePerCitation)^3)=0&quot;),
+    vcov. = sandwich::vcovHC(C, type = &quot;HC1&quot;))</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## I(log(PricePerCitation)^2) = 0
+## I(log(PricePerCitation)^3) = 0
+## 
+## Model 1: restricted model
+## Model 2: log(subs) ~ log(PricePerCitation) + I(log(PricePerCitation)^2) + 
+##     I(log(PricePerCitation)^3) + log(Age) + log(Age) * log(PricePerCitation) + 
+##     log(Characters)
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df     F Pr(&gt;F)
+## 1    175                
+## 2    173  2 0.249 0.7799</code></pre>
+<p>We cannot reject the null hypothesis <span class="math inline">\(H_0:β_3=β_4=0\)</span> in model <span class="math inline">\(C\)</span>.</p>
+</div>
+<div id="section-11" class="section level2 smaller">
+<h2></h2>
+<p>What can we conclude from the regression?</p>
+<ol style="list-style-type: decimal">
+<li>The elasticity of demand for economics journals depend on the age of the journal.</li>
+<li>The evidence supports a linear, rather than a cubic, function of log price.</li>
+<li>Demand is greater for journals with more characters, holding price and age constant.</li>
+</ol>
+</div>
+<div id="section-12" class="section level2 smaller">
+<h2></h2>
+<p>Do you think older journals have a higher price elasticity?</p>
+<pre class="r"><code># get the coefficients from model D
+d &lt;- D$coefficients; d[1];d[2]; d[3]; d[4]; d[5]</code></pre>
+<pre><code>## (Intercept) 
+##    3.433521</code></pre>
+<pre><code>## log(PricePerCitation) 
+##            -0.8989097</code></pre>
+<pre><code>##  log(Age) 
+## 0.3735148</code></pre>
+<pre><code>## log(Characters) 
+##       0.2294661</code></pre>
+<pre><code>## log(PricePerCitation):log(Age) 
+##                      0.1409591</code></pre>
+</div>
+<div id="section-13" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code>## plot
+plot(log(subs) ~ log(PricePerCitation),data = journals)
+abline(c((d[1] + d[3]*log(80)), (d[2] + d[5]*log(80))), col = &quot;red&quot;)
+abline(c((d[1] + d[3]*log(5)), (d[2] + d[5]*log(5))), col = &quot;blue&quot;)
+legend(&quot;bottomleft&quot;,
+       legend = c(&quot;Demand when Age = 80&quot;, &quot;Demand when Age = 5&quot;),
+       lty = 1, col = c(&quot;red&quot;, &quot;blue&quot;))</code></pre>
+<p><img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+</div>
+</div>
+<div id="five-four" class="section level1">
+<h1>5.4 Nonlinear Effects on Test Scores of the Student-Teacher Ratio</h1>
+<p>This section addresses three specific questions about test scores and the student–teacher ratio.</p>
+<ol style="list-style-type: decimal">
+<li>First, after controlling for differences in economic characteristics of different districts, does the effect on test scores of reducing the student–teacher ratio depend on the fraction of English learners?</li>
+<li>Second, does this effect depend on the value of the student–teacher ratio?</li>
+<li>Third, and most important, after taking economic factors and nonlinearities into account, what is the estimated effect on test scores of reducing the student–teacher ratio by two students per teacher, as our superintendent from Chapter 4 proposes to do?</li>
+</ol>
+<div id="section-14" class="section level2 smaller">
+<h2></h2>
+<p><strong>1. First, after controlling for differences in economic characteristics of different districts, does the effect on test scores of reducing the student–teacher ratio depend on the fraction of English learners? </strong></p>
+<pre class="r"><code>LinearModel &lt;- lm(testscr ~ str + HiEL + HiEL:str + meal_pct + log(avginc), 
+    data = caschool)</code></pre>
+<p>Here, <code>meal_pct</code> and <code>avginc</code> measure the economic characteristics. <br>
+Also, <code>HiEL</code> interact with <code>str</code> to measure whether higher proportion of english learners and better class size can improve test scores or not.</p>
+<p><strong>2. Second, does this effect depend on the value of the student–teacher ratio? </strong></p>
+<pre class="r"><code>CubicModel &lt;- lm(testscr ~ str + I(str^2) + I(str^3) + HiEL + meal_pct + log(avginc), 
+    data = caschool)</code></pre>
+<p>Here, the cubic <code>str</code> is included to lay emphasis on the value of <code>str</code> on test scores.</p>
+</div>
+<div id="section-15" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code>stargazer::stargazer(LinearModel, CubicModel, type = &quot;text&quot;, out = &quot;NLE.txt&quot;)</code></pre>
+<pre><code>## 
+## =====================================================================
+##                                    Dependent variable:               
+##                     -------------------------------------------------
+##                                          testscr                     
+##                               (1)                      (2)           
+## ---------------------------------------------------------------------
+## str                         -0.531*                  64.339**        
+##                             (0.300)                  (25.462)        
+##                                                                      
+## I(str2)                                             -3.424***        
+##                                                      (1.294)         
+##                                                                      
+## I(str3)                                              0.059***        
+##                                                      (0.022)         
+##                                                                      
+## HiEL                         5.498                  -5.474***        
+##                             (9.139)                  (1.032)         
+##                                                                      
+## meal_pct                   -0.411***                -0.420***        
+##                             (0.029)                  (0.028)         
+##                                                                      
+## log(avginc)                12.124***                11.748***        
+##                             (1.765)                  (1.734)         
+##                                                                      
+## str:HiEL                     -0.578                                  
+##                             (0.465)                                  
+##                                                                      
+## Constant                   653.666***                252.051         
+##                             (8.891)                 (165.824)        
+##                                                                      
+## ---------------------------------------------------------------------
+## Observations                  420                      420           
+## R2                           0.797                    0.801          
+## Adjusted R2                  0.795                    0.798          
+## Residual Std. Error     8.629 (df = 414)         8.559 (df = 413)    
+## F Statistic         325.804*** (df = 5; 414) 277.212*** (df = 6; 413)
+## =====================================================================
+## Note:                                     *p&lt;0.1; **p&lt;0.05; ***p&lt;0.01</code></pre>
+</div>
+<div id="section-16" class="section level2 smaller">
+<h2></h2>
+<p>Does the cubic model fit better?</p>
+<pre class="r"><code>plot(testscr ~ str, data = caschool, pch = 19, col = rgb(0,0,1, alpha = 0.5))
+lines(smooth.spline(caschool$str, predict(LinearModel)), lwd = 2, lty = 1, col = &quot;green&quot;)
+lines(smooth.spline(caschool$str, predict(CubicModel)), lwd = 2, lty = 2, col = &quot;red&quot;)
+legend(&quot;topright&quot;, legend = c(&quot;LinearModel&quot;, &quot;CubicModel&quot;), 
+       lty = c(1,2), col = c(&quot;green&quot;, &quot;red&quot;), cex = 0.8)</code></pre>
+<div class="figure"><span id="fig:unnamed-chunk-19"></span>
+<img src="/econ0891/5-NonlinearRegressionFunctions_files/figure-html/unnamed-chunk-19-1.png" alt="Figure 1" width="672" />
+<p class="caption">
+Figure 2: Figure 1
+</p>
+</div>
+</div>
+<div id="section-17" class="section level2 smaller">
+<h2></h2>
+<pre class="r"><code># F-test
+car::linearHypothesis(model = CubicModel, 
+  hypothesis.matrix = c( &quot;I(str^2)=0&quot;,&quot;I(str^3)=0&quot;),
+    vcov. = sandwich::vcovHC(CubicModel, type = &quot;HC1&quot;))</code></pre>
+<pre><code>## Linear hypothesis test
+## 
+## Hypothesis:
+## I(str^2) = 0
+## I(str^3) = 0
+## 
+## Model 1: restricted model
+## Model 2: testscr ~ str + I(str^2) + I(str^3) + HiEL + meal_pct + log(avginc)
+## 
+## Note: Coefficient covariance matrix supplied.
+## 
+##   Res.Df Df      F   Pr(&gt;F)   
+## 1    415                      
+## 2    413  2 6.1663 0.002297 **
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+</div>
+<div id="section-18" class="section level2 smaller">
+<h2></h2>
+<p><strong>Summary of findings</strong></p>
+<ol style="list-style-type: decimal">
+<li><p>First, after controlling for economic background, whether there are many or few English learners in the district does not have a substantial influence on the effect on test scores of a change in the student–teacher ratio. In the linear specifications <code>LinearModel</code>, there is no statistically significant evidence of such a difference. The cubic specification in <code>CubicModel</code> provides statistically significant evidence (at the 5% level) that the regression functions are different for districts with high and low percentages of English learners; as shown in Figure 1, however, the estimated regression functions have similar slopes in the range of student–teacher ratios containing most of our data.</p></li>
+<li><p>Second, after controlling for economic background, there is evidence of a nonlinear effect on test scores of the student–teacher ratio. This effect is statistically significant at the 1% level (the coefficients on <span class="math inline">\(STR^2\)</span> and <span class="math inline">\(STR^3\)</span> are always significant at the 1% level).</p></li>
+</ol>
+</div>
+<div id="section-19" class="section level2 smaller">
+<h2></h2>
+<ol start=3>
+<li>
+The effect on test scores of reducing the student–teacher ratio by two students per teacher.
+</ol>
+<p>If her district currently has a student–teacher ratio of 22 and she is considering cutting it to 20, then based on <code>CubicModel</code> the estimated effect of this reduction is to improve test scores by 1.93 points.</p>
+<pre class="r"><code>l &lt;- CubicModel$coefficients
+improved_testscr1 &lt;- (l[2]*20 + l[3]*(20^2) + l[4]*(20^3)) - 
+   (l[2]*22 + l[3]*(22^2) + l[4]*(22^3))
+names(improved_testscr1) &lt;- &quot;ImprovesTestScoreBy&quot;; improved_testscr1</code></pre>
+<pre><code>## ImprovesTestScoreBy 
+##            1.931861</code></pre>
+<p>Based on the <code>LinearModel</code>, the result is 1.063`.</p>
+<pre class="r"><code>improved_testscr2 &lt;- LinearModel$coefficients[2]*20 - 
+   LinearModel$coefficients[2]*22
+names(improved_testscr2) &lt;- &quot;ImprovesTestScoreBy&quot;; improved_testscr2</code></pre>
+<pre><code>## ImprovesTestScoreBy 
+##            1.062064</code></pre>
+</div>
+</div>
+<div id="five-five" class="section level1">
+<h1>5.5 Exercises</h1>
+<p>Solve all the Empirical Exercises that you shall find in pages 352-355 in the book by Stock and Watson.</p>
+</div>

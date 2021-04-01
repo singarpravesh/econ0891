@@ -55,5 +55,34 @@
 3.1 Testing Hypothesis Concerning the slope CoefficientsDo smaller classes lead to higher scores?Our regression equation is \(\hat{TestScore} = \beta_0 + \beta_1 STR\)Null hypothesis: \(H_0: \beta_1 = 0\)Alternative hypothesis: \(H_0: \beta_1 &amp;lt; 0\)# print out just the coefficientssummary(lm_model1)$coefficients## Estimate Std.</description>
     </item>
     
+    <item>
+      <title>4: Hypothesis tests and confidence intervals 2</title>
+      <link>/econ0891/4-hypothesistestsandconfidenceintervals2/</link>
+      <pubDate>Sun, 28 Mar 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/econ0891/4-hypothesistestsandconfidenceintervals2/</guid>
+      <description>Contents4.1 Hypothesis Tests and Confidence Intervals for a Single Coefficient
+4.2 Tests of Joint Hypotheses
+4.3 Model Specification for Multiple Regression
+4.4 Analysis of the testscr data set
+4.5 Exercise
+4.1 Hypothesis Tests and Confidence Intervals for a Single CoefficientIntroduction
+Like all estimators, the OLS estimator has sampling uncertainty because its value differs from one sample to the next.This chapter presents methods for quantifying the sampling uncertainty of the OLS estimator through the use of standard errors, statistical hypothesis tests, and confidence intervals.</description>
+    </item>
+    
+    <item>
+      <title>5: Nonlinear Regression Functions</title>
+      <link>/econ0891/5-nonlinearregressionfunctions/</link>
+      <pubDate>Sat, 27 Mar 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/econ0891/5-nonlinearregressionfunctions/</guid>
+      <description>Contents5.1 A General Strategy for Modelling Nonlinear Regression Functions
+5.2 Interactions between independent variables
+5.3 Example: The demand for economics journals
+5.4 Nonlinear Effects on Test Scores of the Student-Teacher Ratio
+5.5 Exercise
+5.1 A General Strategy for Modelling Nonlinear Regression FunctionsWhat is wrong with the linear fit?The linear regression line seems to overestimate the true relationship when income is very high or very low and underestimates it for the middle income group.</description>
+    </item>
+    
   </channel>
 </rss>
