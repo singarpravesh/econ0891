@@ -56,6 +56,7 @@ output: html_document
 
 **Table 6.1: Difference in test scores between districts with low and high student–teacher ratios, broken down by the quartile of the percentage of English learners. ** 
 ```{r, warning=FALSE, echo=FALSE}
+suppressMessages(library("tibble"))
 # data
 caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
 

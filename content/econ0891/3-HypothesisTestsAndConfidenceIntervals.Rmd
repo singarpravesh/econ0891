@@ -1,0 +1,334 @@
+---
+title: "3: Hypothesis tests and confidence intervals"
+author: "pravesh"
+date: "2021-03-29"
+output: html_document
+---
+
+# Contents
+[3.1 Testing Hypothesis Concerning the slope Coefficients](#three-one)<br>
+[3.2 Confidence intervals for a regression coefficient](#three-two)<br>
+[3.3 Regression when $X$ is a binary variable](#three-three)<br>
+[3.4 Heteroskedasticity and Homoskedasticity](#three-four)<br>
+[3.5 Exercise](#three-five)
+
+# 3.1 Testing Hypothesis Concerning the slope Coefficients {#three-one}
+
+## Do smaller classes lead to higher scores?
+- Our regression equation is $\hat{TestScore} = \beta_0 + \beta_1 STR$
+- Null hypothesis: $H_0: \beta_1 = 0$
+- Alternative hypothesis: $H_0: \beta_1 < 0$
+
+```{r, echo=FALSE}
+suppressMessages(library("tibble"))
+# data
+caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
+
+# linear model
+lm_model1 <- lm(formula = testscr ~ str, data = caschool)
+
+```
+
+```{r}
+# print out just the coefficients
+summary(lm_model1)$coefficients
+```
+
+
+**Interpretation:** ?? 
+
+---
+
+**Graphical inspection of p-value**
+```{r, echo=FALSE}
+# plot the standard normal in the interval [-6,6]
+t <- seq(-6, 6, 0.01)
+plot(x = t, y = dnorm(t, mean = 0, sd = 1),
+     type = "l", lwd = 2,  axes = FALSE, ylab = "", yaxs = "i", col = "blue")
+text(2.5, 0.1, expression(symbol(N(0,1))))
+
+# assigning the t value
+tact <- -4.75
+
+# add x-axis
+axis(side = 1, at =c(0, -1.96, 1.96, tact, -tact, cex.axis = 0.7))
+
+```
+
+The p-Value is the area under the curve to left of −4.75 plus the area under the curve to the right of 4.75. As we already seen from the summary of the model, this value is very small.
+
+---
+
+**Graphical inspection of p-value (code)**
+```{r, eval=FALSE}
+# plot the standard normal in the interval [-6,6]
+t <- seq(-6, 6, 0.01)
+plot(x = t, y = dnorm(t, mean = 0, sd = 1),
+     type = "l", lwd = 2,  axes = FALSE, 
+     ylab = "", yaxs = "i", col = "blue")
+text(2.5, 0.1, expression(symbol(N(0,1))))
+
+# assigning the t value
+tact <- -4.75
+
+# add x-axis
+axis(side = 1, 
+     at =c(0, -1.96, 1.96, 
+           tact, -tact, cex.axis = 0.7))
+
+```
+
+# 3.2 Confidence intervals for a regression coefficient {#three-two}
+
+## {.build .smaller}
+
+**Compute 95%, 99% and 90% confidence interval for coefficients in `lm_model1`**
+```{r}
+confint(lm_model1, level = 0.95)
+```
+
+The value $\beta_1 = 0$ is not contained in this confidence interval, so (as we knew already) the hypothesis $\beta_1 = 0$ can be rejected at the 5% significance level.
+
+```{r}
+confint(lm_model1, level = 0.99)
+```
+
+```{r}
+confint(lm_model1, level = 0.90)
+```
+
+# 3.3 Regression when $X$ is a binary variable {#three-three}
+
+## {.build}
+
+- **Equation with a binary regressor**: 
+$$Y_i = \beta_0 + \beta_1 D_i + u_i$$
+$$D_i = \begin{cases}
+        1 \ \ \text{if $STR$ in $i^{th}$ school district < 20} \\
+        0 \ \ \text{if $STR$ in $i^{th}$ school district $\geq$ 20} \\
+      \end{cases}$$
+- Our regression model is
+$$
+TestScore_i = \beta_0 + \beta_1 D_i + u_i.
+$$
+
+**What is the difference in the expected test scores in districts with lower student-teacher ratio $STR < 20 (D_i = 1)$ and those with higher student-teacher ratio $STR \geq 20 (D_i=0)$?**
+
+## {.build .smaller}
+
+- Create the dummy variable and append it to the dataset.
+```{r}
+# create D and append
+caschool$D <- as.factor(ifelse(caschool$str < 20, 1, 0))
+
+# check the dataset
+str(caschool)
+```
+
+## {.build .smaller}
+- Plot the data
+```{r}
+plot(testscr ~ D, data = caschool, main = "Dummy Regression")
+legend("topleft", legend = c(": STR < 20", expression(paste(": ",STR >= 20))),
+       pch = c("1", "0"), cex = 0.7)
+```
+
+
+## {.smaller}
+
+**Estimate the dummy regression model**
+```{r}
+lm_dummy <- lm(testscr ~ D, data = caschool)
+summary(lm_dummy)
+```
+
+## {.build}
+
+**The interpretation of the coefficients in this regression model is as follows:**
+
+$\beta_0$ = `r round(coef(lm_dummy)[[1]], 2)` is the expected test score in districts where $STR \geq 20$.
+
+$\beta_1$ = `r round(coef(lm_dummy)[[2]], 2)` is the difference in the expected test score between districts with $STR < 20$ and those with $STR \geq 20$.
+    
+**Observation:**
+
+One can see that the expected test score in districts with STR<20 ($D_i=1$) is predicted to be 650.1+7.17=657.27 while districts with STR≥20 ($D_i=0$) are expected to have an average test score of only 650.1.
+  
+## We did a similar one before!
+- Comment on the significance of the model using the $t$-value and the $p$-value.
+- Calculate the confidence intervals for coefficients in the dummy regression model at 5% significance level and comment. 
+
+# 3.4 Heteroskedasticity and Homoskedasticity {#three-four}
+
+## {.smaller}
+
+**Figure 5.3**
+
+Scatterplot of Hourly earnings and Years of education for 29- to 30-Year-Olds in the United States in 2012.
+```{r, echo=FALSE, fig.cap="The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic."}
+cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx")
+lm_earning <- lm(ahe ~ yrseduc, data = cps)
+plot(ahe ~ yrseduc, data = cps, xlab = "Years of Education",
+     ylab = "Average Hourly Earnings",
+     xlim = c(5, 20), ylim = c(0,150), lwd = 2, las = 1)
+abline(lm_earning, col = "blue")
+legend("topleft", legend = c("ahe", "Fitted values"),
+       lty = c(0,1), pch = c(1, NA_integer_),
+       col = c("black", "blue"))
+
+```
+
+
+---
+
+**Variables:**<br>
+```{r, eval=FALSE}
+A_SEX:	1 if male; 2 if female
+A_Age: 	Age
+AHE:		Average Hourly Earnings in 2004
+YRSEDUC:     Years of Education
+
+```
+
+
+```{r}
+# read the data
+cps <- readxl::read_xlsx("C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx")
+
+summary(cps)
+```
+
+---
+
+**Figure 5.3 (Code)**
+```{r, eval=FALSE}
+# fit the linear model
+lm_earning <- lm(ahe ~ yrseduc, data = cps)
+
+# plot
+plot(ahe ~ yrseduc, data = cps, xlab = "Years of Education",
+     ylab = "Average Hourly Earnings",
+     xlim = c(5, 20), ylim = c(0,150), lwd = 2, las = 1)
+abline(lm_earning, col = "blue")
+legend("topleft", legend = c("ahe", "Fitted values"),
+       lty = c(0,1), pch = c(1, NA_integer_),
+       col = c("black", "blue"))
+```
+
+---
+
+- Because homoskedasticity is a special case of heteroskedasticity, the estimators $\hat\sigma^2_\hat{\beta_1}$ and $\hat\sigma^2_\hat{\beta_0}$ of the variances of $\hat\beta_1$ and $\hat\beta_0$ given in Equations (5.4)
+and (5.26) produce valid statistical inferences whether the errors are heteroskedastic or homoskedastic. 
+
+- Thus hypothesis tests and confidence intervals based on those standard errors are valid whether or not the errors are heteroskedastic.
+
+- Because the standard errors based on Equations (5.4) and (5.26) lead to statistical inferences that are valid whether or not the errors are heteroskedastic, they are called **heteroskedasticity-robust standard errors**. 
+
+- Because such formulas were proposed by Eicker (1967), Huber (1967), and White (1980), they are also referred to as **Eicker–Huber–White standard errors**.
+
+## Heteroskedasticity-robust standard errors.{.smaller}
+Consistent estimation of $\sigma_{\hat\beta_1}$ under heteroskedasticity (**Eicker–Huber–White standard errors**):
+$$
+SE(\hat\beta_1) = \sqrt{\frac{1}{n}.\frac{\frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\hat{u_i}^2}{\Big[ \frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\Big]^2}}
+$$
+
+Degrees of freedom correction and considered by MacKinnon & White (1985), The difference is that we multiply by $\frac{1}{n-2}$ in the numerator of the previous equation.
+$$
+SE(\hat\beta_1)_{HC1} = \sqrt{\frac{1}{n}.\frac{\frac{1}{n-2}\sum_{i=1}^{n}(X_i - \overline{X})^2\hat{u_i}^2}{\Big[ \frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\Big]^2}}
+$$
+
+---
+
+Heteroskedasticity-Consistent Covariance Matrix Estimation
+```{r, warning=FALSE, message=FALSE}
+# load the `sandwich` package for vcovHC()`
+library(sandwich)
+
+# Set `type = "HC1"` to use the formula in Equations 5.4 & 5.26
+vcov <- vcovHC(lm_earning, type = "HC1")
+vcov
+```
+
+---
+
+We are interested in the square root of the diagonal elements of this matrix, i.e., the standard error estimates.
+```{r}
+robust_se <- sqrt(diag(vcov))
+robust_se
+```
+
+## {.smaller}
+
+Generate a coefficient summary as provided by `summary()` but with robust standard errors of the coefficient estimators, robust $t$-statistics and corresponding $p$-values.
+```{r, warning=FALSE, message=FALSE}
+# required package
+library(lmtest)
+
+# specify the `vcov` matrix computed earlier in `coeftest()`
+coeftest(lm_earning, vcov. = vcov)
+```
+
+We see that the values reported in the column *Std. Error* are equal those from `sqrt(diag(vcov))`.
+
+---
+
+# 3.5 Exercise {#three-five}
+
+
+
+E5.1 Use the data set [Earnings_and_Height](Earnings_and_Height.xlsx) described in Empirical Exercise 4.2 to carry out the following exercises.
+
+(a). Run a regression of Earnings on Height.
+
+(i). Is the estimated slope statistically significant?
+
+(ii). Construct a 95% confidence interval for the slope coefficient.
+
+(b). Repeat (a) for women.
+
+(c). Repeat (a) for men.
+
+(d). Test the null hypothesis that the effect of height on earnings is the same for men and women. (Hint: See Exercise 5.15.)
+
+
+(e). One explanation for the effect on height on earnings is that some professions require strength, which is correlated with height. Does the effect of height on earnings disappear when the sample is restricted to occupations in which strength is unlikely to be important?
+
+---
+
+E5.2 Using the data set [Growth](Growth.xlsx) described in Empirical Exercise 4.1, but excluding the data for Malta, run a regression of *Growth* on *TradeShare*.
+
+(a). Is the estimated regression slope statistically significant? This is, can you reject the null hypothesis $H_0: \beta_1 = 0$ vs. a two-sided alternative hypothesis at the 10%, 5%, or 1% significance level?
+
+(b). What is the $p$-value associated with the coefficient’s $t$-statistic?
+
+(c). Construct a 90% confidence interval for $\beta_1$.
+
+---
+
+E5.3 The data file [Birthweight_Smoking](birthweight_smoking.xlsx) contains data for a random sample of babies born in Pennsylvania in 1989. The data include the baby’s birth weight together with various characteristics of the mother, including whether she smoked during the pregnancy. A detailed description is given in [Birthweight_Smoking_Description](Birthweight_Smoking_Description.pdf){target="_blank"}. In this exercise you will investigate the relationship between *birth weight* and *smoking during pregnancy*.
+
+(a). In the sample:
+
+(i). What is the average value of *Birthweight* for all mothers?
+
+(ii). For mothers who smoke?
+
+(iii). For mothers who do not smoke?
+
+## {.smaller}
+
+(b). (i). Use the data in the sample to estimate the difference in average birth weight for smoking and nonsmoking mothers.
+
+(ii). What is the standard error for the estimated difference in (i)?
+
+(iii). Construct a 95% confidence interval for the difference in the average birth weight for smoking and nonsmoking mothers.
+
+(c). Run a regression of Birthweight on the binary variable Smoker.
+
+(i). Explain how the estimated slope and intercept are related to your answers in parts (a) and (b).
+
+(ii). Explain how the SE(bn1) is related to your answer in b(ii).
+
+(iii). Construct a 95% confidence interval for the effect of smoking on birth weight.
+
+(d). Do you think smoking is uncorrelated with other factors that cause low birth weight? That is, do you think that the regression error term, say $u_i$, has a conditional mean of zero, given Smoking ($X_i$)? (You will investigate this further in **Birthweight and Smoking** exercises in later chapters.)

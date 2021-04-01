@@ -26,6 +26,7 @@ output: html_document
 
 **Objective : Generate Figure 4.2**
 ```{r, warning=FALSE, echo = FALSE, fig.cap="Scatterplot of TestScore vs Student-Teacher ratio (California School District Data"}
+suppressMessages(library("tibble"))
 caschool <- readxl::read_xlsx('~/blogdown/econ0891/content/econ0891/1-LinearRegressionWithSingleRegressor/caschool.xlsx')
 plot(caschool$testscr ~ caschool$str,
      xlab = "Student-teacher ratio",

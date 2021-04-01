@@ -1,0 +1,305 @@
+---
+title: "3: Hypothesis tests and confidence intervals"
+author: "pravesh"
+date: "2021-03-29"
+output: html_document
+---
+
+
+
+<div id="contents" class="section level1">
+<h1>Contents</h1>
+<p><a href="#three-one">3.1 Testing Hypothesis Concerning the slope Coefficients</a><br>
+<a href="#three-two">3.2 Confidence intervals for a regression coefficient</a><br>
+<a href="#three-three">3.3 Regression when <span class="math inline">\(X\)</span> is a binary variable</a><br>
+<a href="#three-four">3.4 Heteroskedasticity and Homoskedasticity</a><br>
+<a href="#three-five">3.5 Exercise</a></p>
+</div>
+<div id="three-one" class="section level1">
+<h1>3.1 Testing Hypothesis Concerning the slope Coefficients</h1>
+<div id="do-smaller-classes-lead-to-higher-scores" class="section level2">
+<h2>Do smaller classes lead to higher scores?</h2>
+<ul>
+<li>Our regression equation is <span class="math inline">\(\hat{TestScore} = \beta_0 + \beta_1 STR\)</span></li>
+<li>Null hypothesis: <span class="math inline">\(H_0: \beta_1 = 0\)</span></li>
+<li>Alternative hypothesis: <span class="math inline">\(H_0: \beta_1 &lt; 0\)</span></li>
+</ul>
+<pre class="r"><code># print out just the coefficients
+summary(lm_model1)$coefficients</code></pre>
+<pre><code>##               Estimate Std. Error   t value      Pr(&gt;|t|)
+## (Intercept) 698.932952  9.4674914 73.824514 6.569925e-242
+## str          -2.279808  0.4798256 -4.751327  2.783307e-06</code></pre>
+<p><strong>Interpretation:</strong> ??</p>
+<hr />
+<p><strong>Graphical inspection of p-value</strong>
+<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
+<p>The p-Value is the area under the curve to left of −4.75 plus the area under the curve to the right of 4.75. As we already seen from the summary of the model, this value is very small.</p>
+<hr />
+<p><strong>Graphical inspection of p-value (code)</strong></p>
+<pre class="r"><code># plot the standard normal in the interval [-6,6]
+t &lt;- seq(-6, 6, 0.01)
+plot(x = t, y = dnorm(t, mean = 0, sd = 1),
+     type = &quot;l&quot;, lwd = 2,  axes = FALSE, 
+     ylab = &quot;&quot;, yaxs = &quot;i&quot;, col = &quot;blue&quot;)
+text(2.5, 0.1, expression(symbol(N(0,1))))
+
+# assigning the t value
+tact &lt;- -4.75
+
+# add x-axis
+axis(side = 1, 
+     at =c(0, -1.96, 1.96, 
+           tact, -tact, cex.axis = 0.7))</code></pre>
+</div>
+</div>
+<div id="three-two" class="section level1">
+<h1>3.2 Confidence intervals for a regression coefficient</h1>
+<div id="section" class="section level2 build smaller">
+<h2></h2>
+<p><strong>Compute 95%, 99% and 90% confidence interval for coefficients in <code>lm_model1</code></strong></p>
+<pre class="r"><code>confint(lm_model1, level = 0.95)</code></pre>
+<pre><code>##                 2.5 %     97.5 %
+## (Intercept) 680.32313 717.542779
+## str          -3.22298  -1.336637</code></pre>
+<p>The value <span class="math inline">\(\beta_1 = 0\)</span> is not contained in this confidence interval, so (as we knew already) the hypothesis <span class="math inline">\(\beta_1 = 0\)</span> can be rejected at the 5% significance level.</p>
+<pre class="r"><code>confint(lm_model1, level = 0.99)</code></pre>
+<pre><code>##                  0.5 %     99.5 %
+## (Intercept) 674.434473 723.431432
+## str          -3.521425  -1.038191</code></pre>
+<pre class="r"><code>confint(lm_model1, level = 0.90)</code></pre>
+<pre><code>##                    5 %       95 %
+## (Intercept) 683.325725 714.540180
+## str          -3.070804  -1.488812</code></pre>
+</div>
+</div>
+<div id="three-three" class="section level1">
+<h1>3.3 Regression when <span class="math inline">\(X\)</span> is a binary variable</h1>
+<div id="section-1" class="section level2 build">
+<h2></h2>
+<ul>
+<li><strong>Equation with a binary regressor</strong>:
+<span class="math display">\[Y_i = \beta_0 + \beta_1 D_i + u_i\]</span>
+<span class="math display">\[D_i = \begin{cases}
+      1 \ \ \text{if $STR$ in $i^{th}$ school district &lt; 20} \\
+      0 \ \ \text{if $STR$ in $i^{th}$ school district $\geq$ 20} \\
+    \end{cases}\]</span></li>
+<li>Our regression model is
+<span class="math display">\[
+TestScore_i = \beta_0 + \beta_1 D_i + u_i.
+\]</span></li>
+</ul>
+<p><strong>What is the difference in the expected test scores in districts with lower student-teacher ratio <span class="math inline">\(STR &lt; 20 (D_i = 1)\)</span> and those with higher student-teacher ratio <span class="math inline">\(STR \geq 20 (D_i=0)\)</span>?</strong></p>
+</div>
+<div id="section-2" class="section level2 build smaller">
+<h2></h2>
+<ul>
+<li>Create the dummy variable and append it to the dataset.</li>
+</ul>
+<pre class="r"><code># create D and append
+caschool$D &lt;- as.factor(ifelse(caschool$str &lt; 20, 1, 0))
+
+# check the dataset
+str(caschool)</code></pre>
+<pre><code>## tibble [420 x 19] (S3: tbl_df/tbl/data.frame)
+##  $ Observation Number: num [1:420] 1 2 3 4 5 6 7 8 9 10 ...
+##  $ dist_cod          : num [1:420] 75119 61499 61549 61457 61523 ...
+##  $ county            : chr [1:420] &quot;Alameda&quot; &quot;Butte&quot; &quot;Butte&quot; &quot;Butte&quot; ...
+##  $ district          : chr [1:420] &quot;Sunol Glen Unified&quot; &quot;Manzanita Elementary&quot; &quot;Thermalito Union Elementary&quot; &quot;Golden Feather Union Elementary&quot; ...
+##  $ gr_span           : chr [1:420] &quot;KK-08&quot; &quot;KK-08&quot; &quot;KK-08&quot; &quot;KK-08&quot; ...
+##  $ enrl_tot          : num [1:420] 195 240 1550 243 1335 ...
+##  $ teachers          : num [1:420] 10.9 11.1 82.9 14 71.5 ...
+##  $ calw_pct          : num [1:420] 0.51 15.42 55.03 36.48 33.11 ...
+##  $ meal_pct          : num [1:420] 2.04 47.92 76.32 77.05 78.43 ...
+##  $ computer          : num [1:420] 67 101 169 85 171 25 28 66 35 0 ...
+##  $ testscr           : num [1:420] 691 661 644 648 641 ...
+##  $ comp_stu          : num [1:420] 0.344 0.421 0.109 0.35 0.128 ...
+##  $ expn_stu          : num [1:420] 6385 5099 5502 7102 5236 ...
+##  $ str               : num [1:420] 17.9 21.5 18.7 17.4 18.7 ...
+##  $ avginc            : num [1:420] 22.69 9.82 8.98 8.98 9.08 ...
+##  $ el_pct            : num [1:420] 0 4.58 30 0 13.86 ...
+##  $ read_scr          : num [1:420] 692 660 636 652 642 ...
+##  $ math_scr          : num [1:420] 690 662 651 644 640 ...
+##  $ D                 : Factor w/ 2 levels &quot;0&quot;,&quot;1&quot;: 2 1 2 2 2 1 2 1 2 1 ...</code></pre>
+</div>
+<div id="section-3" class="section level2 build smaller">
+<h2></h2>
+<ul>
+<li>Plot the data</li>
+</ul>
+<pre class="r"><code>plot(testscr ~ D, data = caschool, main = &quot;Dummy Regression&quot;)
+legend(&quot;topleft&quot;, legend = c(&quot;: STR &lt; 20&quot;, expression(paste(&quot;: &quot;,STR &gt;= 20))),
+       pch = c(&quot;1&quot;, &quot;0&quot;), cex = 0.7)</code></pre>
+<p><img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+</div>
+<div id="section-4" class="section level2 smaller">
+<h2></h2>
+<p><strong>Estimate the dummy regression model</strong></p>
+<pre class="r"><code>lm_dummy &lt;- lm(testscr ~ D, data = caschool)
+summary(lm_dummy)</code></pre>
+<pre><code>## 
+## Call:
+## lm(formula = testscr ~ D, data = caschool)
+## 
+## Residuals:
+##     Min      1Q  Median      3Q     Max 
+## -50.601 -14.047  -0.451  12.841  49.399 
+## 
+## Coefficients:
+##             Estimate Std. Error t value Pr(&gt;|t|)    
+## (Intercept)  649.979      1.388 468.380  &lt; 2e-16 ***
+## D1             7.372      1.843   3.999 7.52e-05 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+## 
+## Residual standard error: 18.72 on 418 degrees of freedom
+## Multiple R-squared:  0.03685,    Adjusted R-squared:  0.03455 
+## F-statistic: 15.99 on 1 and 418 DF,  p-value: 7.515e-05</code></pre>
+</div>
+<div id="section-5" class="section level2 build">
+<h2></h2>
+<p><strong>The interpretation of the coefficients in this regression model is as follows:</strong></p>
+<p><span class="math inline">\(\beta_0\)</span> = 649.98 is the expected test score in districts where <span class="math inline">\(STR \geq 20\)</span>.</p>
+<p><span class="math inline">\(\beta_1\)</span> = 7.37 is the difference in the expected test score between districts with <span class="math inline">\(STR &lt; 20\)</span> and those with <span class="math inline">\(STR \geq 20\)</span>.</p>
+<p><strong>Observation:</strong></p>
+<p>One can see that the expected test score in districts with STR&lt;20 (<span class="math inline">\(D_i=1\)</span>) is predicted to be 650.1+7.17=657.27 while districts with STR≥20 (<span class="math inline">\(D_i=0\)</span>) are expected to have an average test score of only 650.1.</p>
+</div>
+<div id="we-did-a-similar-one-before" class="section level2">
+<h2>We did a similar one before!</h2>
+<ul>
+<li>Comment on the significance of the model using the <span class="math inline">\(t\)</span>-value and the <span class="math inline">\(p\)</span>-value.</li>
+<li>Calculate the confidence intervals for coefficients in the dummy regression model at 5% significance level and comment.</li>
+</ul>
+</div>
+</div>
+<div id="three-four" class="section level1">
+<h1>3.4 Heteroskedasticity and Homoskedasticity</h1>
+<div id="section-6" class="section level2 smaller">
+<h2></h2>
+<p><strong>Figure 5.3</strong></p>
+Scatterplot of Hourly earnings and Years of education for 29- to 30-Year-Olds in the United States in 2012.
+<div class="figure"><span id="fig:unnamed-chunk-11"></span>
+<img src="/econ0891/3-HypothesisTestsAndConfidenceIntervals_files/figure-html/unnamed-chunk-11-1.png" alt="The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic." width="672" />
+<p class="caption">
+Figure 1: The spread around the regression line increases with the years of education, indicating that the regression errors are heteroskedastic.
+</p>
+</div>
+<hr />
+<p><strong>Variables:</strong><br></p>
+<pre class="r"><code>A_SEX:  1 if male; 2 if female
+A_Age:  Age
+AHE:        Average Hourly Earnings in 2004
+YRSEDUC:     Years of Education</code></pre>
+<pre class="r"><code># read the data
+cps &lt;- readxl::read_xlsx(&quot;C:/Users/Pravesh/Documents/blogdown/econ0891/content/econ0891/3-HypothesisTestsAndConfidenceIntervals/ch5_cps_box.xlsx&quot;)
+
+summary(cps)</code></pre>
+<pre><code>##      a_age           a_sex            ahe             yrseduc     
+##  Min.   :29.00   Min.   :1.000   Min.   :  2.198   Min.   : 6.00  
+##  1st Qu.:29.00   1st Qu.:1.000   1st Qu.: 12.019   1st Qu.:12.00  
+##  Median :30.00   Median :1.000   Median : 17.308   Median :14.00  
+##  Mean   :29.52   Mean   :1.448   Mean   : 19.840   Mean   :14.02  
+##  3rd Qu.:30.00   3rd Qu.:2.000   3rd Qu.: 24.615   3rd Qu.:16.00  
+##  Max.   :30.00   Max.   :2.000   Max.   :120.192   Max.   :18.00</code></pre>
+<hr />
+<p><strong>Figure 5.3 (Code)</strong></p>
+<pre class="r"><code># fit the linear model
+lm_earning &lt;- lm(ahe ~ yrseduc, data = cps)
+
+# plot
+plot(ahe ~ yrseduc, data = cps, xlab = &quot;Years of Education&quot;,
+     ylab = &quot;Average Hourly Earnings&quot;,
+     xlim = c(5, 20), ylim = c(0,150), lwd = 2, las = 1)
+abline(lm_earning, col = &quot;blue&quot;)
+legend(&quot;topleft&quot;, legend = c(&quot;ahe&quot;, &quot;Fitted values&quot;),
+       lty = c(0,1), pch = c(1, NA_integer_),
+       col = c(&quot;black&quot;, &quot;blue&quot;))</code></pre>
+<hr />
+<ul>
+<li><p>Because homoskedasticity is a special case of heteroskedasticity, the estimators <span class="math inline">\(\hat\sigma^2_\hat{\beta_1}\)</span> and <span class="math inline">\(\hat\sigma^2_\hat{\beta_0}\)</span> of the variances of <span class="math inline">\(\hat\beta_1\)</span> and <span class="math inline">\(\hat\beta_0\)</span> given in Equations (5.4)
+and (5.26) produce valid statistical inferences whether the errors are heteroskedastic or homoskedastic.</p></li>
+<li><p>Thus hypothesis tests and confidence intervals based on those standard errors are valid whether or not the errors are heteroskedastic.</p></li>
+<li><p>Because the standard errors based on Equations (5.4) and (5.26) lead to statistical inferences that are valid whether or not the errors are heteroskedastic, they are called <strong>heteroskedasticity-robust standard errors</strong>.</p></li>
+<li><p>Because such formulas were proposed by Eicker (1967), Huber (1967), and White (1980), they are also referred to as <strong>Eicker–Huber–White standard errors</strong>.</p></li>
+</ul>
+</div>
+<div id="heteroskedasticity-robust-standard-errors." class="section level2 smaller">
+<h2>Heteroskedasticity-robust standard errors.</h2>
+<p>Consistent estimation of <span class="math inline">\(\sigma_{\hat\beta_1}\)</span> under heteroskedasticity (<strong>Eicker–Huber–White standard errors</strong>):
+<span class="math display">\[
+SE(\hat\beta_1) = \sqrt{\frac{1}{n}.\frac{\frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\hat{u_i}^2}{\Big[ \frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\Big]^2}}
+\]</span></p>
+<p>Degrees of freedom correction and considered by MacKinnon &amp; White (1985), The difference is that we multiply by <span class="math inline">\(\frac{1}{n-2}\)</span> in the numerator of the previous equation.
+<span class="math display">\[
+SE(\hat\beta_1)_{HC1} = \sqrt{\frac{1}{n}.\frac{\frac{1}{n-2}\sum_{i=1}^{n}(X_i - \overline{X})^2\hat{u_i}^2}{\Big[ \frac{1}{n}\sum_{i=1}^{n}(X_i - \overline{X})^2\Big]^2}}
+\]</span></p>
+<hr />
+<p>Heteroskedasticity-Consistent Covariance Matrix Estimation</p>
+<pre class="r"><code># load the `sandwich` package for vcovHC()`
+library(sandwich)
+
+# Set `type = &quot;HC1&quot;` to use the formula in Equations 5.4 &amp; 5.26
+vcov &lt;- vcovHC(lm_earning, type = &quot;HC1&quot;)
+vcov</code></pre>
+<pre><code>##             (Intercept)      yrseduc
+## (Intercept)  1.20884141 -0.089991655
+## yrseduc     -0.08999165  0.006877887</code></pre>
+<hr />
+<p>We are interested in the square root of the diagonal elements of this matrix, i.e., the standard error estimates.</p>
+<pre class="r"><code>robust_se &lt;- sqrt(diag(vcov))
+robust_se</code></pre>
+<pre><code>## (Intercept)     yrseduc 
+##  1.09947324  0.08293303</code></pre>
+</div>
+<div id="section-7" class="section level2 smaller">
+<h2></h2>
+<p>Generate a coefficient summary as provided by <code>summary()</code> but with robust standard errors of the coefficient estimators, robust <span class="math inline">\(t\)</span>-statistics and corresponding <span class="math inline">\(p\)</span>-values.</p>
+<pre class="r"><code># required package
+library(lmtest)
+
+# specify the `vcov` matrix computed earlier in `coeftest()`
+coeftest(lm_earning, vcov. = vcov)</code></pre>
+<pre><code>## 
+## t test of coefficients:
+## 
+##              Estimate Std. Error t value  Pr(&gt;|t|)    
+## (Intercept) -7.291614   1.099473 -6.6319 3.955e-11 ***
+## yrseduc      1.934688   0.082933 23.3283 &lt; 2.2e-16 ***
+## ---
+## Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1</code></pre>
+<p>We see that the values reported in the column <em>Std. Error</em> are equal those from <code>sqrt(diag(vcov))</code>.</p>
+<hr />
+</div>
+</div>
+<div id="three-five" class="section level1">
+<h1>3.5 Exercise</h1>
+<p>E5.1 Use the data set <a href="Earnings_and_Height.xlsx">Earnings_and_Height</a> described in Empirical Exercise 4.2 to carry out the following exercises.</p>
+<p>(a). Run a regression of Earnings on Height.</p>
+<p>(i). Is the estimated slope statistically significant?</p>
+<p>(ii). Construct a 95% confidence interval for the slope coefficient.</p>
+<p>(b). Repeat (a) for women.</p>
+<p>(c). Repeat (a) for men.</p>
+<p>(d). Test the null hypothesis that the effect of height on earnings is the same for men and women. (Hint: See Exercise 5.15.)</p>
+<p>(e). One explanation for the effect on height on earnings is that some professions require strength, which is correlated with height. Does the effect of height on earnings disappear when the sample is restricted to occupations in which strength is unlikely to be important?</p>
+<hr />
+<p>E5.2 Using the data set <a href="Growth.xlsx">Growth</a> described in Empirical Exercise 4.1, but excluding the data for Malta, run a regression of <em>Growth</em> on <em>TradeShare</em>.</p>
+<p>(a). Is the estimated regression slope statistically significant? This is, can you reject the null hypothesis <span class="math inline">\(H_0: \beta_1 = 0\)</span> vs. a two-sided alternative hypothesis at the 10%, 5%, or 1% significance level?</p>
+<p>(b). What is the <span class="math inline">\(p\)</span>-value associated with the coefficient’s <span class="math inline">\(t\)</span>-statistic?</p>
+<p>(c). Construct a 90% confidence interval for <span class="math inline">\(\beta_1\)</span>.</p>
+<hr />
+<p>E5.3 The data file <a href="birthweight_smoking.xlsx">Birthweight_Smoking</a> contains data for a random sample of babies born in Pennsylvania in 1989. The data include the baby’s birth weight together with various characteristics of the mother, including whether she smoked during the pregnancy. A detailed description is given in <a href="Birthweight_Smoking_Description.pdf" target="_blank">Birthweight_Smoking_Description</a>. In this exercise you will investigate the relationship between <em>birth weight</em> and <em>smoking during pregnancy</em>.</p>
+<p>(a). In the sample:</p>
+<p>(i). What is the average value of <em>Birthweight</em> for all mothers?</p>
+<p>(ii). For mothers who smoke?</p>
+<p>(iii). For mothers who do not smoke?</p>
+<div id="section-8" class="section level2 smaller">
+<h2></h2>
+<p>(b). (i). Use the data in the sample to estimate the difference in average birth weight for smoking and nonsmoking mothers.</p>
+<p>(ii). What is the standard error for the estimated difference in (i)?</p>
+<p>(iii). Construct a 95% confidence interval for the difference in the average birth weight for smoking and nonsmoking mothers.</p>
+<p>(c). Run a regression of Birthweight on the binary variable Smoker.</p>
+<p>(i). Explain how the estimated slope and intercept are related to your answers in parts (a) and (b).</p>
+<p>(ii). Explain how the SE(bn1) is related to your answer in b(ii).</p>
+<p>(iii). Construct a 95% confidence interval for the effect of smoking on birth weight.</p>
+<p>(d). Do you think smoking is uncorrelated with other factors that cause low birth weight? That is, do you think that the regression error term, say <span class="math inline">\(u_i\)</span>, has a conditional mean of zero, given Smoking (<span class="math inline">\(X_i\)</span>)? (You will investigate this further in <strong>Birthweight and Smoking</strong> exercises in later chapters.)</p>
+</div>
+</div>

@@ -23,8 +23,7 @@
 1.4 Measures of fit
 1.5 The sensitivity of OLS to large outliers
 1.6 Exercise
-1.1 IntroductionReference book (Theory): Introduction to Econometrics by Stock and Watson, 3e.The data are taken from the Companion Website for Introduction to Econometrics book.1.2 Linear RegressionObjective : Generate Figure 4.2
-## Registered S3 methods overwritten by &amp;#39;tibble&amp;#39;:## method from ## format.</description>
+1.1 IntroductionReference book (Theory): Introduction to Econometrics by Stock and Watson, 3e.The data are taken from the Companion Website for Introduction to Econometrics book.1.2 Linear RegressionObjective : Generate Figure 4.2Figure 1: Scatterplot of TestScore vs Student-Teacher ratio (California School District DataObjective : Generate Figure 4.</description>
     </item>
     
     <item>
@@ -40,6 +39,20 @@
 2.5 Exercise
 2.1 IntroductionReference book (Theory): Introduction to Econometrics by Stock and Watson, 3e.The data are taken from the Companion Website for Introduction to Econometrics book.2.2 Omitted variable biasExample #1: Percentage of English learners
 What was our previous assessment about testscr?We estimated the linear model \(\hat{testscr} = 698.</description>
+    </item>
+    
+    <item>
+      <title>3: Hypothesis tests and confidence intervals</title>
+      <link>/econ0891/3-hypothesistestsandconfidenceintervals/</link>
+      <pubDate>Mon, 29 Mar 2021 00:00:00 +0000</pubDate>
+      
+      <guid>/econ0891/3-hypothesistestsandconfidenceintervals/</guid>
+      <description>Contents3.1 Testing Hypothesis Concerning the slope Coefficients
+3.2 Confidence intervals for a regression coefficient
+3.3 Regression when \(X\) is a binary variable
+3.4 Heteroskedasticity and Homoskedasticity
+3.5 Exercise
+3.1 Testing Hypothesis Concerning the slope CoefficientsDo smaller classes lead to higher scores?Our regression equation is \(\hat{TestScore} = \beta_0 + \beta_1 STR\)Null hypothesis: \(H_0: \beta_1 = 0\)Alternative hypothesis: \(H_0: \beta_1 &amp;lt; 0\)# print out just the coefficientssummary(lm_model1)$coefficients## Estimate Std.</description>
     </item>
     
   </channel>
