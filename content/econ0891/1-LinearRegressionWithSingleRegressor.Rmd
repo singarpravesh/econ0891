@@ -43,7 +43,7 @@ caschool <- readxl::read_xlsx("~/blogdown/econ0891/content/econ0891/1-LinearRegr
 str(caschool)
 ```
 
-Check the description of the dataset caschool.xlsx [here](californiatestscores.docx){target="_blank"}
+Download the dataset [caschool.xlsx](caschool.xlsx) and the [description](californiatestscores.docx){target="_blank"}
 
 ```{r}
 names(caschool)
